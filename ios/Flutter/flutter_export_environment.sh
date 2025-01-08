@@ -1,12 +1,7 @@
 #!/bin/sh
 # This is a generated file; do not edit or check into version control.
-<<<<<<< HEAD
-export "FLUTTER_ROOT=C:\src\flutter"
-export "FLUTTER_APPLICATION_PATH=D:\Users\Arpita\recipe_app"
-=======
 export "FLUTTER_ROOT=C:\Users\prachi\dev\flutter"
-export "FLUTTER_APPLICATION_PATH=C:\Users\prachi\AndroidStudioProjects\mealmatch"
->>>>>>> 61b6915cc5c256356c0a22e6819a50a4ceb548c6
+export "FLUTTER_APPLICATION_PATH=C:\Users\prachi\AndroidStudioProjects\mealmatch_new"
 export "COCOAPODS_PARALLEL_CODE_SIGN=true"
 export "FLUTTER_TARGET=lib\main.dart"
 export "FLUTTER_BUILD_DIR=build"

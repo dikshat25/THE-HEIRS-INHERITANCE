@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:recipe_app/features/app/presentation/pages/login.dart';
-import 'package:recipe_app/features/app/presentation/pages/register.dart';
-import 'package:recipe_app/features/app/presentation/pages/root_page.dart';
+import 'package:mealmatch/features/app/presentation/pages/login.dart';
+import 'package:mealmatch/features/app/presentation/pages/register.dart';
+import 'package:mealmatch/features/app/presentation/pages/root_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

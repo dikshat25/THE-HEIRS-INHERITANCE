@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:recipe_app/features/user_auth/firebase_auth_implementation/firebase_auth_services.dart';
+import 'package:mealmatch/features/user_auth/firebase_auth_implementation/firebase_auth_services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:recipe_app/features/app/presentation/pages/login.dart';
+import 'package:mealmatch/features/app/presentation/pages/login.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

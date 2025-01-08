@@ -1,11 +1,6 @@
 // This is a generated file; do not edit or check into version control.
-<<<<<<< HEAD
-FLUTTER_ROOT=C:\src\flutter
-FLUTTER_APPLICATION_PATH=D:\Users\Arpita\recipe_app
-=======
 FLUTTER_ROOT=C:\Users\prachi\dev\flutter
-FLUTTER_APPLICATION_PATH=C:\Users\prachi\AndroidStudioProjects\mealmatch
->>>>>>> 61b6915cc5c256356c0a22e6819a50a4ceb548c6
+FLUTTER_APPLICATION_PATH=C:\Users\prachi\AndroidStudioProjects\mealmatch_new
 COCOAPODS_PARALLEL_CODE_SIGN=true
 FLUTTER_TARGET=lib\main.dart
 FLUTTER_BUILD_DIR=build

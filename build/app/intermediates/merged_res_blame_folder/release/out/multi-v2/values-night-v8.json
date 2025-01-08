@@ -1,0 +1,28 @@
+{
+    "logs": [
+        {
+            "outputFile": "com.example.mealmatch.app-mergeReleaseResources-32:/values-night-v8/values-night-v8.xml",
+            "map": [
+                {
+                    "source": "C:\\Users\\prachi\\AndroidStudioProjects\\mealmatch_new\\android\\app\\src\\main\\res\\values-night\\styles.xml",
+                    "from": {
+                        "startLines": "3,10",
+                        "startColumns": "4,4",
+                        "startOffsets": "134,535",
+                        "endLines": "7,13",
+                        "endColumns": "12,12",
+                        "endOffsets": "445,777"
+                    },
+                    "to": {
+                        "startLines": "2,6",
+                        "startColumns": "4,4",
+                        "startOffsets": "55,244",
+                        "endLines": "5,9",
+                        "endColumns": "12,12",
+                        "endOffsets": "239,425"
+                    }
+                }
+            ]
+        }
+    ]
+}

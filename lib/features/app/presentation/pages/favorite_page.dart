@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:recipe_app/features/app/presentation/Model/recipe.dart';
+import 'package:mealmatch/features/app/presentation/Model/recipe.dart';
 
 class FavoritePage extends StatefulWidget {
   const FavoritePage();

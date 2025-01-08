@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:animated_bottom_navigation_bar/animated_bottom_navigation_bar.dart';
 import 'package:page_transition/page_transition.dart';
-import 'package:recipe_app/features/app/presentation/pages/favorite_page.dart';
-import 'package:recipe_app/features/app/presentation/pages/home_page.dart';
-import 'package:recipe_app/features/app/presentation/pages/meal_planner.dart';
-import 'package:recipe_app/features/app/presentation/pages/shopping_cart.dart';
-import 'package:recipe_app/features/app/presentation/pages/Scan_img.dart';
-import 'package:recipe_app/features/app/presentation/pages/favorite_page.dart';
-import 'package:recipe_app/features/app/presentation/pages/home_page.dart';
-import 'package:recipe_app/features/app/presentation/pages/meal_planner.dart';
-import 'package:recipe_app/features/app/presentation/pages/shopping_cart.dart';
+import 'package:mealmatch/features/app/presentation/pages/favorite_page.dart';
+import 'package:mealmatch/features/app/presentation/pages/home_page.dart';
+import 'package:mealmatch/features/app/presentation/pages/meal_planner.dart';
+import 'package:mealmatch/features/app/presentation/pages/shopping_cart.dart';
+import 'package:mealmatch/features/app/presentation/pages/Scan_img.dart';
+import 'package:mealmatch/features/app/presentation/pages/favorite_page.dart';
+import 'package:mealmatch/features/app/presentation/pages/home_page.dart';
+import 'package:mealmatch/features/app/presentation/pages/meal_planner.dart';
+import 'package:mealmatch/features/app/presentation/pages/shopping_cart.dart';
 
 class RootPage extends StatefulWidget {
   const RootPage({Key? key}) : super(key: key);

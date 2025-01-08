@@ -1,6 +1,6 @@
 {
-    "name": "recipe_app",
-    "short_name": "recipe_app",
+    "name": "mealmatch",
+    "short_name": "mealmatch",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
