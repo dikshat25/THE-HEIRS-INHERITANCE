@@ -1,0 +1,4 @@
+#Sat Jan 11 22:12:36 IST 2025
+base.0=C\:\\Users\\prachi\\AndroidStudioProjects\\mealmatch_new\\build\\app\\intermediates\\dex\\release\\minifyReleaseWithR8\\classes.dex
+path.0=classes.dex
+renamed.0=classes.dex

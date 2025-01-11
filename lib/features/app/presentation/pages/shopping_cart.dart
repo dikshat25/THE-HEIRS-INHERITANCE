@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:mealmatch/features/app/presentation/Model/recipe.dart';
 
 class ShoppingCart extends StatelessWidget {
-  const ShoppingCart();
+  const ShoppingCart({super.key});
 
   @override
   Widget build(BuildContext context) {

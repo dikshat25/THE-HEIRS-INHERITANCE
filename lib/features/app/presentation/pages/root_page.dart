@@ -6,13 +6,9 @@ import 'package:mealmatch/features/app/presentation/pages/home_page.dart';
 import 'package:mealmatch/features/app/presentation/pages/meal_planner.dart';
 import 'package:mealmatch/features/app/presentation/pages/shopping_cart.dart';
 import 'package:mealmatch/features/app/presentation/pages/Scan_img.dart';
-import 'package:mealmatch/features/app/presentation/pages/favorite_page.dart';
-import 'package:mealmatch/features/app/presentation/pages/home_page.dart';
-import 'package:mealmatch/features/app/presentation/pages/meal_planner.dart';
-import 'package:mealmatch/features/app/presentation/pages/shopping_cart.dart';
 
 class RootPage extends StatefulWidget {
-  const RootPage({Key? key}) : super(key: key);
+  const RootPage({super.key});
 
   @override
   State<RootPage> createState() => _RootPageState();
@@ -93,8 +89,8 @@ class _RootPageState extends State<RootPage> {
             ),
           );
         },
-        child: Icon(Icons.camera_alt, size: 20.0),
         backgroundColor: primaryColor,
+        child: Icon(Icons.camera_alt, size: 20.0),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
 

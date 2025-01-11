@@ -1,0 +1,1 @@
+ C:\\Users\\prachi\\AndroidStudioProjects\\mealmatch_new\\.dart_tool\\flutter_build\\7deb7b361588ec5b032543c682314dd7\\native_assets.yaml: 

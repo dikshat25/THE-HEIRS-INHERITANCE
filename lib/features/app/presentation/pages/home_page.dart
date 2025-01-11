@@ -15,10 +15,10 @@ class _HomepageState extends State<Homepage> {
     int selectedIndex = 0;
     Size size = MediaQuery.of(context).size;
 
-    List<Recipe> _recipelist = Recipe.fetchRecipes();
+    List<Recipe> recipelist = Recipe.fetchRecipes();
 
     //recipe category
-    List<String> _recipeTypes = [
+    List<String> recipeTypes = [
       'Recommended',
       'Courses',
       'Cuisines',
@@ -76,6 +76,11 @@ class _HomepageState extends State<Homepage> {
                         horizontal: 16.0,
                       ),
                       width: size.width* .9,
+                      decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(20)
+
+                      ),
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.center ,
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -92,11 +97,6 @@ class _HomepageState extends State<Homepage> {
                           Icon(Icons.mic, color: Colors.black54.withOpacity(.6),),
                         ],
                       ),
-                      decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(20)
-
-                      ),
                     )
                   ],
                 ),
@@ -109,7 +109,7 @@ class _HomepageState extends State<Homepage> {
                 width: size.width,
                 child: ListView.builder(
                     scrollDirection: Axis.horizontal,
-                    itemCount: _recipeTypes.length,
+                    itemCount: recipeTypes.length,
                     itemBuilder: (BuildContext context , int index){
                       return Padding(
                         padding: const EdgeInsets.all(8.0),
@@ -120,7 +120,7 @@ class _HomepageState extends State<Homepage> {
                             });
                           },
                           child: Text(
-                            _recipeTypes[index],
+                            recipeTypes[index],
                             style: TextStyle(
                               fontSize: 16.0,
                               fontWeight: selectedIndex== index? FontWeight.bold : FontWeight.w300,
@@ -136,12 +136,16 @@ class _HomepageState extends State<Homepage> {
               SizedBox(
                 height: size.height*.3,
                 child: ListView.builder(
-                    itemCount: _recipelist.length,
+                    itemCount: recipelist.length,
                     scrollDirection: Axis.horizontal,
                     itemBuilder: (BuildContext context , int index) {
                       return Container(
                         width: 300,
                         margin: const EdgeInsets.symmetric(horizontal: 10 ),
+                        decoration: BoxDecoration(
+                          color: Color(0xff00473d).withOpacity(.8),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
                         child: Stack(
                           children: [
                             Positioned(
@@ -150,15 +154,15 @@ class _HomepageState extends State<Homepage> {
                                 child: Container(
                                   height: 50,
                                   width: 50,
-                                  child: IconButton(
-                                    onPressed: null,
-                                    icon: Icon(_recipelist[index].isFavorated == true ? Icons.favorite :Icons.favorite_outline_rounded),
-                                    color: Colors.redAccent,
-                                    iconSize: 30,
-                                  ),
                                   decoration: BoxDecoration(
                                       color: Colors.white,
                                       borderRadius: BorderRadius.circular(50)
+                                  ),
+                                  child: IconButton(
+                                    onPressed: null,
+                                    icon: Icon(recipelist[index].isFavorated == true ? Icons.favorite :Icons.favorite_outline_rounded),
+                                    color: Colors.redAccent,
+                                    iconSize: 30,
                                   ),
                                 )
                             ),
@@ -167,7 +171,7 @@ class _HomepageState extends State<Homepage> {
                                 right: 50,
                                 top: 50,
                                 bottom: 50,
-                                child: Image.asset(_recipelist[index].imageURL)
+                                child: Image.asset(recipelist[index].imageURL)
                             ),
                             Positioned(
                                 bottom: 15,
@@ -175,13 +179,13 @@ class _HomepageState extends State<Homepage> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(_recipelist[index].category,
+                                    Text(recipelist[index].category,
                                       style: const TextStyle(
                                         color: Colors.white70,
                                         fontSize: 16,
                                       ),
                                     ),
-                                    Text(_recipelist[index].recipeName , style: const TextStyle(
+                                    Text(recipelist[index].recipeName , style: const TextStyle(
                                       color: Colors.white70,
                                       fontSize: 15,
                                       fontWeight: FontWeight.bold,
@@ -200,17 +204,13 @@ class _HomepageState extends State<Homepage> {
                                   color: Colors.white,
                                   borderRadius: BorderRadius.circular(20),
                                 ),
-                                child: Text(r'' + _recipelist[index].rating.toString() , style: TextStyle(
+                                child: Text(r'' + recipelist[index].rating.toString() , style: TextStyle(
                                   color: Color(0xff00473d),
                                   fontSize: 16,
                                 ),),
                               ),
                             ),
                           ],
-                        ),
-                        decoration: BoxDecoration(
-                          color: Color(0xff00473d).withOpacity(.8),
-                          borderRadius: BorderRadius.circular(20),
                         ),
                       );
                     }
@@ -227,7 +227,7 @@ class _HomepageState extends State<Homepage> {
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 height: size.height*.5,
                 child: ListView.builder(
-                    itemCount: _recipelist.length,
+                    itemCount: recipelist.length,
                     scrollDirection: Axis.vertical,
                     physics: const BouncingScrollPhysics(),
                     itemBuilder: (BuildContext context , int index) {
@@ -261,7 +261,7 @@ class _HomepageState extends State<Homepage> {
                                   right: 0,
                                   child: SizedBox(
                                     height: 80.0,
-                                    child: Image.asset(_recipelist[index].imageURL),
+                                    child: Image.asset(recipelist[index].imageURL),
                                   ),
                                 ),
                                 Positioned(
@@ -270,8 +270,8 @@ class _HomepageState extends State<Homepage> {
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        Text(_recipelist[index].category),
-                                        Text(_recipelist[index].recipeName, style: TextStyle(
+                                        Text(recipelist[index].category),
+                                        Text(recipelist[index].recipeName, style: TextStyle(
                                           fontWeight: FontWeight.bold,
                                           fontSize: 18,
                                           color: Color(0xff00473d),

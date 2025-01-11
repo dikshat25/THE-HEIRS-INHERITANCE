@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:mealmatch/features/app/presentation/Model/recipe.dart';
 
 class FavoritePage extends StatefulWidget {
-  const FavoritePage();
+  const FavoritePage({super.key});
 
   @override
   State<FavoritePage> createState() => _FavoritePageState();
