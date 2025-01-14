@@ -63,6 +63,23 @@ dev_dependencies:
 flutter:
   assets:
     - Assets/login.png
+    - Assets/Ellipse.png
+    - Assets/loginbackground.jpg
+    - Assets/nutss.png
+    - Assets/dairy.png
+    - Assets/eggs.png
+    - Assets/fish.png
+    - Assets/gluten.png
+    - Assets/soy.png
+    - Assets/vegetarian-icon.webp
+    - Assets/garlic.png
+    - Assets/non-vegetarian-icon.webp
+    - Assets/onion.png
+    - Assets/sugar.png
+    - Assets/sweetners.png
+    - Assets/vegan.png
+
+
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.

@@ -6,6 +6,8 @@ import 'package:mealmatch/features/app/presentation/pages/home_page.dart';
 import 'package:mealmatch/features/app/presentation/pages/meal_planner.dart';
 import 'package:mealmatch/features/app/presentation/pages/shopping_cart.dart';
 import 'package:mealmatch/features/app/presentation/pages/Scan_img.dart';
+import 'package:mealmatch/features/app/presentation/pages/pantry.dart'; // Added PantryPage import
+import 'package:mealmatch/features/app/presentation/pages/accounts.dart'; // Added AccountsPage import
 
 class RootPage extends StatefulWidget {
   const RootPage({super.key});
@@ -19,7 +21,7 @@ class _RootPageState extends State<RootPage> {
   int _bottomNavIndex = 0;
 
   // Colors for the theme
-  static const Color primaryColor = Color(0xff319788);
+  static const Color primaryColor = Color(0xff1b534c);
   static const Color blackColor = Colors.black;
 
   // Bottom nav icons list
@@ -40,10 +42,10 @@ class _RootPageState extends State<RootPage> {
 
   // Pages corresponding to bottom navigation items
   List<Widget> pages = [
-    Homepage(),         // This is your Home page
-    FavoritePage(),     // Favorite page
-    MealPlanner(),      // Meal Planner page
-    ShoppingCart(),     // Shopping Cart page
+    Homepage(), // Home page
+    FavouritePage(), // Favorite page
+    MealPlanner(), // Meal Planner page
+    CartPage(), // Cart page
   ];
 
   @override
@@ -54,23 +56,59 @@ class _RootPageState extends State<RootPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-
       appBar: AppBar(
         title: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              titleList[_bottomNavIndex],
+              "MealMatch",
               style: TextStyle(
-                color: blackColor,
+                color: Color(0xff00473d),
                 fontWeight: FontWeight.w500,
-                fontSize: 24,
+                fontSize: 22,
               ),
             ),
-            Icon(Icons.notifications, color: blackColor, size: 30.0),
+            SizedBox(
+              width: MediaQuery.of(context).size.width * 0.4,
+            ),
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => PantryPage()),
+                );
+              },
+              child: Tooltip(
+                message: 'Pantry',
+                child: Icon(
+                  Icons.food_bank_outlined,
+                  color: Color(0xff00473d),
+                  size: 40.0,
+                ),
+              ),
+            ),
+            SizedBox(
+              width: MediaQuery.of(context).size.width * 0.01,
+            ),
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => AccountsPage()),
+                );
+              },
+              child: Tooltip(
+                message: 'Account',
+                child: Icon(
+                  Icons.account_circle,
+                  color: Color(0xff00473d),
+                  size: 40.0,
+                ),
+              ),
+            ),
           ],
         ),
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        backgroundColor: Color(0xffffffff),
         elevation: 0.0,
       ),
 
@@ -84,13 +122,13 @@ class _RootPageState extends State<RootPage> {
           Navigator.push(
             context,
             PageTransition(
-              child: const ScanImg(),  // Navigate to ScanImg page
+              child: const ScanImg(), // Navigate to ScanImg page
               type: PageTransitionType.bottomToTop,
             ),
           );
         },
         backgroundColor: primaryColor,
-        child: Icon(Icons.camera_alt, size: 20.0),
+        child: Icon(Icons.camera_alt, color: Colors.white, size: 20.0),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
 
