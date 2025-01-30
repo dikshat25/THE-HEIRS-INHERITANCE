@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
+import 'package:mealmatch/features/app/presentation/pages/pantry_search.dart';
+import 'package:image_picker/image_picker.dart';
+
 
 final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
@@ -12,24 +17,45 @@ class PantryPage extends StatefulWidget {
 }
 
 class _PantryPageState extends State<PantryPage> {
-
-
-
   List<Map<String, dynamic>> checklistItems = [];
-
   final List<Map<String, dynamic>> shoppingList = [];
-
-
-
   String selectedQuantity = '';
   String? selectedFraction;
   String? selectedUnit = 'unit';
   String selectedCategory = 'None';
+  String sortBy = 'Name';
+  File? selectedImage;
 
   TextEditingController quantityController = TextEditingController();
 
-  // FUNCTION TO ADD ITEMS TO CHECKLIST
-  void _addItemToChecklist(String itemName, String itemDescription) {
+  @override
+  void initState() {
+    super.initState();
+    _loadChecklistItems();
+  }
+
+  @override
+  void dispose() {
+    quantityController.dispose(); // Dispose the controller
+    super.dispose();
+  }
+
+  Future<void> _loadChecklistItems() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String? checklistJson = prefs.getString('checklistItems');
+    if (checklistJson != null) {
+      setState(() {
+        checklistItems = List<Map<String, dynamic>>.from(jsonDecode(checklistJson));
+      });
+    }
+  }
+
+  Future<void> _saveChecklistItems() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('checklistItems', jsonEncode(checklistItems));
+  }
+
+  void _addItemToChecklist(String itemName, String itemDescription, String text, File? image) {
     setState(() {
       checklistItems.add({
         'itemName': itemName,
@@ -37,20 +63,120 @@ class _PantryPageState extends State<PantryPage> {
         'isChecked': false,
         'quantity': selectedQuantity,
         'category': selectedCategory,
-        'fraction': selectedFraction,  // Save selected fraction
+        'fraction': selectedFraction,
         'unit': selectedUnit,
+        'timestamp': DateTime.now().toIso8601String(), // Add timestamp
+        'image': image, // Store the image if available
       });
+      _saveChecklistItems(); // Save the updated list
     });
   }
 
 
-  //ACCEPT USER INPUT TO ADD ITEM
+  void _toggleChecklistItem(int index) {
+    setState(() {
+      checklistItems[index]['isChecked'] = !checklistItems[index]['isChecked'];
+      _saveChecklistItems(); // Save the updated list
+    });
+  }
+
+  void _removeChecklistItem(int index) {
+    setState(() {
+      checklistItems.removeAt(index);
+      _saveChecklistItems(); // Save the updated list
+    });
+  }
+
+  void _sortChecklist() {
+    setState(() {
+      if (sortBy == 'Name') {
+        checklistItems.sort((a, b) => a['itemName'].compareTo(b['itemName']));
+      } else if (sortBy == 'Category') {
+        checklistItems.sort((a, b) => a['category'].compareTo(b['category']));
+      } else if (sortBy == 'Quantity') {
+        checklistItems.sort((a, b) => a['quantity'].compareTo(b['quantity']));
+      } else if (sortBy == 'Last Added First') {
+        checklistItems.sort((a, b) {
+          var timeA = DateTime.parse(a['timestamp']);
+          var timeB = DateTime.parse(b['timestamp']);
+          return timeB.compareTo(timeA); // Last added items come first
+        });
+      }
+      _saveChecklistItems(); // Save the updated list
+    });
+  }
+
+  Future<void> _pickImage(BuildContext context) async {
+    final picker = ImagePicker();
+
+    // Show dialog to choose between camera and gallery
+    final option = await showDialog<String>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text(
+            "Select Image Source",
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          content: const Text(
+            "Choose where to pick the image from.",
+            style: TextStyle(fontSize: 16),
+          ),
+          actions: <Widget>[
+            // Camera button
+            TextButton(
+              onPressed: () => Navigator.pop(context, 'camera'),
+              child: const Text(
+                'Camera',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.blue,
+                ),
+              ),
+            ),
+            // Gallery button
+            TextButton(
+              onPressed: () => Navigator.pop(context, 'gallery'),
+              child: const Text(
+                'Gallery',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.blue,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    // If option is selected, proceed with picking the image
+    if (option != null) {
+      final pickedFile = await picker.pickImage(
+        source: option == 'camera' ? ImageSource.camera : ImageSource.gallery,
+      );
+
+      // If an image is picked, update the selectedImage
+      if (pickedFile != null) {
+        setState(() {
+          selectedImage = File(pickedFile.path); // Store the image file
+        });
+      }
+    }
+  }
+
+
+
   Future _acceptInput(BuildContext context) {
-    final _formKey = GlobalKey<FormState>();
-
-    TextEditingController itemNameController = TextEditingController();
-    TextEditingController itemDescriptionController = TextEditingController();
-
+    final TextEditingController itemNameController = TextEditingController();
+    final TextEditingController itemDescriptionController = TextEditingController();
+    String selectedOption = 'Quantity'; // Default selected option
+    String? selectedQuantity; // To hold the entered quantity
+    String? selectedFraction; // To hold the selected fraction
+    String? selectedUnit; // To hold the selected unit
 
     return showModalBottomSheet(
       context: context,
@@ -58,29 +184,20 @@ class _PantryPageState extends State<PantryPage> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
       ),
       builder: (context) {
-        double screenHeight =
-            MediaQuery
-                .of(context)
-                .size
-                .height; // Get screen height
-        String selectedOption = "Quantity"; // Default selected option
-        DateTime? selectedDate; // Declare selectedDate variable
+        double screenHeight = MediaQuery.of(context).size.height;
 
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setState) {
             return Container(
               height: screenHeight * 0.8,
-              // Set height to 80% of the screen height
               padding: const EdgeInsets.all(20),
               child: SingleChildScrollView(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-
                     const Text(
                       "Add Item Details",
-                      style:
-                      TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 20),
 
@@ -92,23 +209,17 @@ class _PantryPageState extends State<PantryPage> {
                       ),
                       controller: itemNameController,
                     ),
-
                     const SizedBox(height: 15),
 
                     // Item Description
-                    SizedBox(
-                      height: 40,
-                      child: TextField(
-                        decoration: const InputDecoration(
-                          labelText: "Item Description",
-                          border: OutlineInputBorder(),
-                          contentPadding: EdgeInsets.symmetric(
-                              vertical: 10, horizontal: 12),
-                        ),
-                        controller: itemDescriptionController,
+                    TextField(
+                      decoration: const InputDecoration(
+                        labelText: "Item Description",
+                        border: OutlineInputBorder(),
+                        contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12),
                       ),
+                      controller: itemDescriptionController,
                     ),
-
                     const SizedBox(height: 20),
 
                     // Options: Quantity, Category
@@ -118,25 +229,20 @@ class _PantryPageState extends State<PantryPage> {
                         GestureDetector(
                           onTap: () {
                             setState(() {
-                              selectedOption = "Quantity";
+                              selectedOption = 'Quantity';
                             });
                           },
                           child: Container(
-                            padding: EdgeInsets.symmetric(
-                                vertical: 12, horizontal: 25),
+                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 25),
                             decoration: BoxDecoration(
-                              color: selectedOption == "Quantity"
-                                  ? Colors.green.withOpacity(
-                                  0.2) // Light blue for selected
-                                  : Colors
-                                  .transparent, // Transparent background for unselected
+                              color: selectedOption == 'Quantity'
+                                  ? Colors.green.withOpacity(0.2)
+                                  : Colors.transparent,
                             ),
                             child: Text(
                               "Quantity",
                               style: TextStyle(
-                                color: selectedOption == "Quantity"
-                                    ? Colors.green
-                                    : Colors.black87,
+                                color: selectedOption == 'Quantity' ? Colors.green : Colors.black87,
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -146,25 +252,20 @@ class _PantryPageState extends State<PantryPage> {
                         GestureDetector(
                           onTap: () {
                             setState(() {
-                              selectedOption = "Category";
+                              selectedOption = 'Category';
                             });
                           },
                           child: Container(
-                            padding: EdgeInsets.symmetric(
-                                vertical: 12, horizontal: 25),
+                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 25),
                             decoration: BoxDecoration(
-                              color: selectedOption == "Category"
-                                  ? Colors.green.withOpacity(
-                                  0.2) // Light green for selected
-                                  : Colors
-                                  .transparent, // Transparent background for unselected
+                              color: selectedOption == 'Category'
+                                  ? Colors.green.withOpacity(0.2)
+                                  : Colors.transparent,
                             ),
                             child: Text(
                               "Category",
                               style: TextStyle(
-                                color: selectedOption == "Category"
-                                    ? Colors.green
-                                    : Colors.black87,
+                                color: selectedOption == 'Category' ? Colors.green : Colors.black87,
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -173,42 +274,69 @@ class _PantryPageState extends State<PantryPage> {
                         ),
                       ],
                     ),
-
                     const SizedBox(height: 20),
+
                     // Content Below Based on Selected Option
-                    selectedOption == "Quantity"
-                        ? _quantityContent()
-                        : selectedOption == "Category"
-                        ? _categoryContent()
-                        : _expiryDateContent(
-                        context, selectedDate, setState),
+                    selectedOption == 'Quantity'
+                        ? _quantityContent(setState)
+                        : selectedOption == 'Category'
+                        ? _categoryContent(setState)
+                        : Container(),
 
                     const SizedBox(height: 20),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      // Space the buttons evenly
                       children: [
                         // Add Item Button
                         Expanded(
                           child: ElevatedButton(
                             onPressed: () {
-                              setState(() {
+                              if (itemNameController.text.isNotEmpty) {
                                 _addItemToChecklist(
                                   itemNameController.text,
                                   itemDescriptionController.text,
+                                  "$selectedQuantity $selectedFraction $selectedUnit",
+                                  selectedImage, // Pass the selected image as part of the checklist item
                                 );
-                              });
-                              itemNameController.clear();
-                              itemDescriptionController.clear();
+
+                                // Clear inputs
+                                itemNameController.clear();
+                                itemDescriptionController.clear();
+                                selectedQuantity = null;
+                                selectedFraction = null;
+                                selectedUnit = null;
+                                selectedImage = null; // Clear the selected image after adding
+
+                                Navigator.pop(context); // Close the bottom sheet
+                              } else {
+                                // Show dialog if the item name is empty
+                                showDialog(
+                                  context: context,
+                                  builder: (BuildContext context) {
+                                    return AlertDialog(
+                                      title: const Text(
+                                        "Error",
+                                        style: TextStyle(fontSize: 20),
+                                      ),
+                                      content: const Text("Please input an item name."),
+                                      actions: <Widget>[
+                                        TextButton(
+                                          onPressed: () {
+                                            Navigator.of(context).pop(); // Close the dialog
+                                          },
+                                          child: const Text("OK"),
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                );
+                              }
                             },
                             style: ElevatedButton.styleFrom(
-                              minimumSize: Size(double.infinity, 50),
-                              // Full width inside the Expanded
-                              backgroundColor: Colors.green,
-                              // Button color
+                              minimumSize: const Size(double.infinity, 50), // Full width inside the Expanded
+                              backgroundColor: Colors.green, // Button color
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius
-                                    .zero, // Rectangular shape
+                                borderRadius: BorderRadius.zero, // Rectangular shape
                               ),
                             ),
                             child: const Text(
@@ -221,27 +349,25 @@ class _PantryPageState extends State<PantryPage> {
                           ),
                         ),
 
+
                         const SizedBox(width: 10),
                         // Add space between the buttons
 
-                        // Done Button
+                        // Scan to Add Button
                         Expanded(
                           child: ElevatedButton(
                             onPressed: () {
-                              // Done button functionality
+                              _pickImage(context); // Call the function to pick an image
                             },
                             style: ElevatedButton.styleFrom(
-                              minimumSize: Size(double.infinity, 50),
-                              // Full width inside the Expanded
-                              backgroundColor: Color(0xFFB71C1C),
-                              // Button color
+                              minimumSize: const Size(double.infinity, 50), // Full width inside the Expanded
+                              backgroundColor: const Color(0xFFB71C1C), // Button color
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius
-                                    .zero, // Rectangular shape
+                                borderRadius: BorderRadius.zero, // Rectangular shape
                               ),
                             ),
                             child: const Text(
-                              "Scan to Add",
+                              "Add Image",
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 18,
@@ -249,9 +375,9 @@ class _PantryPageState extends State<PantryPage> {
                             ),
                           ),
                         ),
-                      ],
-                    )
 
+                      ],
+                    ),
                   ],
                 ),
               ),
@@ -262,8 +388,314 @@ class _PantryPageState extends State<PantryPage> {
     );
   }
 
+
+  @override
+  Widget build(BuildContext context) {
+    Size size = MediaQuery.of(context).size;
+
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back), // Back arrow icon
+          onPressed: () {
+            Navigator.pop(context); // Handle back navigation
+          },
+        ),
+        backgroundColor: Color(0xffe7fae4), // Set app bar background color
+        elevation: 0, // Remove the default shadow of the app bar
+      ),
+      backgroundColor: const Color(0xffe7fae4),
+      body: Stack(
+        children: [
+          SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+
+                Container(
+                  padding: const EdgeInsets.only(left: 30, top: 20, bottom: 20),
+                  child: Row(
+                    children: const [
+                      Text(
+                        'Pantry',
+                        style: TextStyle(
+                          color: Color(0xff0c3934) ,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 40.0,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Search Bar
+                Container(
+                  padding: const EdgeInsets.only(top: 20, left: 15, right: 15),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => PantrySearchPage(checklistItems: checklistItems),
+                            ),
+                          );
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 10.0),
+                          width: size.width * .9,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.search, color: Colors.black54.withOpacity(.6), size: 28),
+                              const Expanded(
+                                child: Text(
+                                  'Search your pantry...',
+                                  style: TextStyle(
+                                    color: Colors.black54,
+                                    fontSize: 18,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+
+
+
+                // Item Count and Sort
+                Container(
+                  padding: const EdgeInsets.only(top: 30),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 18.0),
+                        width: size.width * .9,
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            Text(
+                              "${checklistItems.length} ${checklistItems.length == 1 ? 'item' : 'items'}",
+                              style: const TextStyle(
+                                fontSize: 20.0,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xff00473d),
+                              ),
+                            ),
+                            SizedBox(width: size.width * .09),
+                            const Text(
+                              "Sort by :",
+                              style: TextStyle(
+                                fontSize: 18.0,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xff00473d),
+                              ),
+                            ),
+                            DropdownButton<String>(
+                              value: sortBy,
+                              onChanged: (String? newValue) {
+                                setState(() {
+                                  sortBy = newValue!;
+                                  _sortChecklist(); // Apply sorting when changed
+                                });
+                              },
+                              items: <String>['Name', 'Category', 'Quantity', 'Last Added First']
+                                  .map<DropdownMenuItem<String>>((String value) {
+                                return DropdownMenuItem<String>(
+                                  value: value,
+                                  child: Text(value),
+                                );
+                              }).toList(),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Add Item Button
+                GestureDetector(
+                  onTap: () {
+                    _acceptInput(context); // Add new item to checklist
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.only(left: 30, top: 50, bottom: 20),
+                    child: Row(
+                      children: const [
+                        Icon(
+                          Icons.add_circle_outline_rounded,
+                          size: 26.0,
+                          color: Colors.black,
+                        ),
+                        SizedBox(width: 8),
+                        Text(
+                          'Add item',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 20.0,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                // Checklist
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: checklistItems.length,
+                    itemBuilder: (context, index) {
+                      return Container(
+                        decoration: BoxDecoration(
+                          color: const Color(0xff00E390).withOpacity(.16),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        height: 100.0,
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        margin: const EdgeInsets.only(bottom: 10),
+                        width: double.infinity,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.only(right: 10),
+                              child: Container(
+                                width: 80, // Fixed width
+                                height: 80, // Fixed height to make it square
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(8), // Optional: rounded corners
+                                  border: Border.all(
+                                    color: Colors.grey, // Border color (optional)
+                                    width: 1, // Border width
+                                  ),
+                                  color: checklistItems[index]['image'] == null
+                                      ? Color(0xffe8bbbb) // Pink box if image is null
+                                      : null, // No background color if the image is not null
+                                ),
+                                child: checklistItems[index]['image'] != null
+                                    ? ClipRRect(
+                                  borderRadius: BorderRadius.circular(8), // Ensures image has rounded corners
+                                  child: Image.file(
+                                    checklistItems[index]['image']!,
+                                    fit: BoxFit.cover, // Ensures image fills the container
+                                  ),
+                                )
+                                    : const Icon(
+                                  Icons.image, // Placeholder icon when image is null
+                                  color: Colors.white,
+                                  size: 40,
+                                ),
+                              ),
+                            ),
+
+
+                            // Left side of the checklist item
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  checklistItems[index]['itemName']!,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 18,
+                                    color: Color(0xff00473d),
+                                  ),
+                                ),
+                                const SizedBox(height: 5),
+                                Row(
+                                  children: [
+                                    Text(
+                                      '${checklistItems[index]['quantity']?.toString() ?? ""} ${checklistItems[index]['fraction'] ?? ""} ${checklistItems[index]['unit'] ?? ""}',
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.black54,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Text(
+                                      checklistItems[index]['category'] ?? '',
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.black54,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 5),
+                                Text(
+                                  checklistItems[index]['itemDescription']!,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            // Right side with checkbox and delete button
+                            Row(
+                              children: [
+                                // Display the image on the left side if it's available
+
+                                // Checkbox
+                                Checkbox(
+                                  value: checklistItems[index]['isChecked'],
+                                  onChanged: (bool? value) {
+                                    setState(() {
+                                      checklistItems[index]['isChecked'] = value ?? false;
+                                      _saveChecklistItems(); // Save the state after change
+                                    });
+                                  },
+                                  activeColor: Colors.green[900],
+                                ),
+                                // Delete button
+                                IconButton(
+                                  icon: const Icon(Icons.delete),
+                                  color: Colors.red[900],
+                                  onPressed: () {
+                                    setState(() {
+                                      checklistItems.removeAt(index);
+                                      _saveChecklistItems(); // Save after deletion
+                                    });
+                                  },
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                )
+
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   // Widget for Quantity Content
-  Widget _quantityContent() {
+  Widget _quantityContent(StateSetter setState) {
+    TextEditingController quantityController = TextEditingController(text: selectedQuantity); // Set initial value
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -275,15 +707,13 @@ class _PantryPageState extends State<PantryPage> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            // Whole Numbers
             Expanded(
               child: TextField(
                 controller: quantityController,
-                // Attach controller to retain value
                 keyboardType: TextInputType.numberWithOptions(decimal: true),
                 onChanged: (value) {
                   setState(() {
-                    selectedQuantity = value; // Update the selected quantity
+                    selectedQuantity = value;
                   });
                 },
                 decoration: InputDecoration(
@@ -292,19 +722,11 @@ class _PantryPageState extends State<PantryPage> {
                 ),
               ),
             ),
-
-            // Fractions
             Expanded(
               child: DropdownButtonFormField<String>(
                 value: selectedFraction,
                 items: [
-                  "1/8",
-                  "1/4",
-                  "3/8",
-                  "1/2",
-                  "5/8",
-                  "3/4",
-                  "7/8",
+                  "1/8", "1/4", "3/8", "1/2", "5/8", "3/4", "7/8",
                 ].map((fraction) {
                   return DropdownMenuItem<String>(
                     value: fraction,
@@ -322,8 +744,6 @@ class _PantryPageState extends State<PantryPage> {
                 ),
               ),
             ),
-
-            // Unit
             Expanded(
               child: DropdownButtonFormField<String>(
                 value: selectedUnit,
@@ -340,6 +760,7 @@ class _PantryPageState extends State<PantryPage> {
                   });
                 },
                 decoration: const InputDecoration(
+                  labelText: "Select Unit",
                   border: OutlineInputBorder(),
                 ),
               ),
@@ -350,8 +771,9 @@ class _PantryPageState extends State<PantryPage> {
     );
   }
 
-  // Widget for Category Content
-  Widget _categoryContent() {
+
+// Widget for Category Content
+  Widget _categoryContent(StateSetter setState) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -382,410 +804,4 @@ class _PantryPageState extends State<PantryPage> {
     );
   }
 
-  Widget _expiryDateContent(BuildContext context, DateTime? selectedDate,
-      StateSetter setState) {
-    // Create a TextEditingController that holds the selected date
-    TextEditingController dateController = TextEditingController(
-      text: selectedDate != null
-          ? "${selectedDate.toLocal().toString().split(
-          ' ')[0]}" // Format the date
-          : "",
-    );
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          "Select Expiry Date:",
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 10),
-        TextButton(
-          onPressed: () async {
-            DateTime? pickedDate = await showDatePicker(
-              context: context,
-              initialDate: selectedDate ?? DateTime.now(),
-              firstDate: DateTime(2000),
-              lastDate: DateTime(2101),
-            );
-            if (pickedDate != null) {
-              setState(() {
-                selectedDate = pickedDate;
-                // Update the TextEditingController text with the new selected date
-                dateController.text =
-                "${pickedDate.toLocal().toString().split(' ')[0]}";
-              });
-            }
-          },
-          child: const Text(
-            "Pick Date",
-            style: TextStyle(fontSize: 16, color: Colors.blue),
-          ),
-        ),
-        const SizedBox(height: 10),
-        // Display the selected date in a text field
-        TextField(
-          controller: dateController,
-          decoration: const InputDecoration(
-            labelText: "Expiry Date",
-            border: OutlineInputBorder(),
-          ),
-          readOnly:
-          true, // Make it read-only so that the user cannot manually type
-        ),
-      ],
-    );
-  }
-
-  // Function to add a new item to Firestore
-  Future<void> _addItemToFirestore(String itemName, String itemDescription,
-      String quantity, String category, DateTime expiryDate) async {
-    try {
-      await _firestore.collection('shopping_cart').add({
-        'itemName': itemName,
-        'itemDescription': itemDescription,
-        'quantity': quantity,
-        'category': category,
-        'expiryDate': expiryDate,
-      });
-      print("Item added to Firestore");
-    } catch (e) {
-      print("Error adding item: $e");
-    }
-  }
-
-
-
-
-
-
-
-
-  @override
-  Widget build(BuildContext context) {
-    Size size = MediaQuery
-        .of(context)
-        .size;
-
-    return Scaffold(
-      backgroundColor: Color(0xffe7fae4),
-
-
-      body: Stack(
-        children: [
-
-
-          // Main Content
-          SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 20),
-
-                // Search Container
-                Container(
-                  padding: const EdgeInsets.only(top: 20),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                        width: size.width * .9,
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.menu,
-                                color: Colors.white.withOpacity(.8)),
-                            Expanded(
-                              child: TextField(
-                                showCursor: false,
-                                decoration: InputDecoration(
-                                  hintText: '   Search your pantry...',
-                                  hintStyle: TextStyle(color: Colors.white70),
-                                  border: InputBorder.none,
-                                  focusedBorder: InputBorder.none,
-                                ),
-                              ),
-                            ),
-                            Icon(Icons.search,
-                                color: Colors.white.withOpacity(.8)),
-                          ],
-                        ),
-                        decoration: BoxDecoration(
-                          color: Color(0xff00473d),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                //SHARE FUNCTIONALITY
-                Container(
-                  padding: const EdgeInsets.only(top: 50),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                        width: MediaQuery.of(context).size.width * .9,
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          children: [
-                            Text(
-                              "Pantry",
-                              style: TextStyle(
-                                fontSize: 30.0,
-                                fontWeight: FontWeight.w900,
-                                color: Color(0xff00473d),
-                              ),
-                            ),
-                            const SizedBox(width: 13.0),
-                            // Dropdown menu for sharing options
-
-
-
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-
-
-
-
-                //ITEM COUNT AND SORT
-                Container(
-                  padding: const EdgeInsets.only(top: 30),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 18.0),
-                        width: size.width * .9,
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          children: [
-                            Text(
-                              "${checklistItems.length} ${checklistItems
-                                  .length == 1 ? 'item' : 'items'}",
-                              style: TextStyle(
-                                fontSize: 20.0,
-                                fontWeight: FontWeight.w700,
-                                color: Color(0xff00473d),
-                              ),
-                            ),
-                            SizedBox(width: size.width * .4),
-                            Text(
-                              "Sort by",
-                              style: TextStyle(
-                                fontSize: 18.0,
-                                fontWeight: FontWeight.w700,
-                                color: Color(0xff00473d),
-                              ),
-                            ),
-                            Icon(
-                              Icons.keyboard_arrow_down_rounded,
-                              color: Color(0xff00473d),
-                              size: 30.0,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-
-
-
-
-                //ITEM ADD BUTTON
-                GestureDetector(
-                  onTap: () {
-                    _acceptInput(
-                        context); // Call the function when the button is clicked
-                  },
-                  child: Container(
-                    padding:
-                    const EdgeInsets.only(left: 30, top: 50, bottom: 20),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.add_circle_outline_rounded,
-                          size: 26.0,
-                          color: Colors.black,
-                        ),
-                        SizedBox(width: 8),
-                        Text(
-                          'Add item',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w900,
-                            fontSize: 20.0,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-
-
-
-                // CHECKLIST
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Checklist Items List
-                      ListView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: checklistItems.length,
-                        // Using checklistItems instead of searchResults
-                        itemBuilder: (context, index) {
-                          return Container(
-                            decoration: BoxDecoration(
-                              color: Color(0xff00E390).withOpacity(.16),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            height: 100.0,
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 10),
-                            margin: const EdgeInsets.only(bottom: 10),
-                            width: double.infinity,
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                // Left side of the checklist item
-                                Stack(
-                                  clipBehavior: Clip.none,
-                                  children: [
-                                    Container(
-                                      width: 60,
-                                      height: 60,
-                                    ),
-                                    Positioned(
-                                      bottom: 5,
-                                      left: 20,
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment
-                                            .start,
-                                        children: [
-                                          Text(
-                                            checklistItems[index]['itemName']!,
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 18,
-                                              color: Color(0xff00473d),
-                                            ),
-                                          ),
-                                          const SizedBox(height: 5), // Add space between item name and description
-                                          Row(
-                                            mainAxisAlignment: MainAxisAlignment.start,
-                                            children: [
-                                              // Display Quantity, Fraction, and Unit
-                                              Text(
-                                                '${checklistItems[index]['quantity']?.toString() ?? ""} ${checklistItems[index]['fraction'] ?? ""} ${checklistItems[index]['unit'] ?? ""}',                                       style: const TextStyle(
-                                                fontSize: 14,
-                                                color: Colors.black54,
-                                              ),
-                                              ),
-                                              const SizedBox(width: 10), // Add space between quantity and category
-                                              // Display Category
-                                              Text(
-                                                ' ${checklistItems[index]['category'] ?? ' '}',
-                                                style: const TextStyle(
-                                                  fontSize: 14,
-                                                  color: Colors.black54,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          const SizedBox(height: 5),
-
-                                          // Add space between quantity/category and description
-
-                                          Row(
-                                            mainAxisAlignment: MainAxisAlignment.start,
-                                            children: [
-                                              Text(
-
-                                                checklistItems[index]['itemDescription']!,
-                                                style: const TextStyle(
-                                                  fontSize: 14,
-                                                  color: Colors.black,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.end,
-                                  children: [
-                                    Checkbox(
-                                      value: checklistItems[index]['isChecked'],
-                                      onChanged: (bool? value) {
-                                        setState(() {
-                                          checklistItems[index]['isChecked'] =
-                                              value ?? false;
-                                        });
-                                      },
-                                      activeColor: Colors.green[900],
-                                    ),
-                                    IconButton(
-                                      icon: const Icon(Icons.delete),
-                                      color: Colors.red[900],
-                                      onPressed: () {
-                                        setState(() {
-                                          checklistItems.removeAt(
-                                              index); // Remove item from list
-                                        });
-                                      },
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-                )
-
-
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-

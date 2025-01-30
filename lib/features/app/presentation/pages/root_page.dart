@@ -7,7 +7,8 @@ import 'package:mealmatch/features/app/presentation/pages/meal_planner.dart';
 import 'package:mealmatch/features/app/presentation/pages/shopping_cart.dart';
 import 'package:mealmatch/features/app/presentation/pages/Scan_img.dart';
 import 'package:mealmatch/features/app/presentation/pages/pantry.dart'; // Added PantryPage import
-import 'package:mealmatch/features/app/presentation/pages/accounts.dart'; // Added AccountsPage import
+import 'package:mealmatch/features/app/presentation/pages/accounts.dart';
+import 'package:mealmatch/features/app/presentation/Model/recipe.dart';
 
 class RootPage extends StatefulWidget {
   const RootPage({super.key});
@@ -42,10 +43,11 @@ class _RootPageState extends State<RootPage> {
 
   // Pages corresponding to bottom navigation items
   List<Widget> pages = [
+
     Homepage(), // Home page
     FavouritePage(), // Favorite page
     MealPlanner(), // Meal Planner page
-    CartPage(), // Cart page
+    cartPage(), // Cart page
   ];
 
   @override

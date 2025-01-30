@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:timezone/data/latest.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
 
 class MealPlanner extends StatefulWidget {
   const MealPlanner({super.key});
@@ -6,17 +9,28 @@ class MealPlanner extends StatefulWidget {
   @override
   State<MealPlanner> createState() => _MealPlannerState();
 }
+
 class _MealPlannerState extends State<MealPlanner> {
   DateTime selectedDate = DateTime.now();
-  DateTime currentWeekStart =
-  DateTime.now().subtract(Duration(days: DateTime.now().weekday - 1));
+  DateTime currentWeekStart = DateTime.now().subtract(Duration(days: DateTime.now().weekday - 1));
 
-  final Map<DateTime, Map<String, List<String>>> mealsByDate = {};
+  final Map<DateTime, Map<String, List<Map<String, dynamic>>>> mealsByDate = {};
+  late FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
 
+  @override
+  void initState() {
+    super.initState();
+    flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+    _initializeNotifications();
+    tz.initializeTimeZones();
+  }
 
-  static const Color primaryColor = Color(0xff00473d);
-  static const Color greenBackground = Color(0xff00E390);
-  static const Color inactiveColor = Colors.black54;
+  void _initializeNotifications() async {
+    const initializationSettings = InitializationSettings(
+      android: AndroidInitializationSettings('app_icon'),
+    );
+    await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+  }
 
   void _navigateDay(int days) {
     setState(() {
@@ -32,14 +46,24 @@ class _MealPlannerState extends State<MealPlanner> {
 
   void _addMeal(String category) {
     TextEditingController mealController = TextEditingController();
+    TextEditingController timeController = TextEditingController();
 
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: Text("Add Meal to $category"),
-        content: TextField(
-          controller: mealController,
-          decoration: const InputDecoration(hintText: "Enter meal name"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: mealController,
+              decoration: const InputDecoration(hintText: "Enter meal name"),
+            ),
+            TextField(
+              controller: timeController,
+              decoration: const InputDecoration(hintText: "Enter time (e.g., 8:00 AM)"),
+            ),
+          ],
         ),
         actions: [
           TextButton(
@@ -48,11 +72,17 @@ class _MealPlannerState extends State<MealPlanner> {
           ),
           TextButton(
             onPressed: () {
-              if (mealController.text.isNotEmpty) {
+              if (mealController.text.isNotEmpty && timeController.text.isNotEmpty) {
+                String mealTime = timeController.text;
                 setState(() {
                   mealsByDate.putIfAbsent(selectedDate, () => {});
                   mealsByDate[selectedDate]!.putIfAbsent(category, () => []);
-                  mealsByDate[selectedDate]![category]!.add(mealController.text);
+                  mealsByDate[selectedDate]![category]!.add({
+                    'meal': mealController.text,
+                    'time': mealTime,
+                  });
+
+                  _scheduleMealNotification(mealController.text, mealTime);
                 });
               }
               Navigator.pop(context);
@@ -64,17 +94,59 @@ class _MealPlannerState extends State<MealPlanner> {
     );
   }
 
-  void _deleteMeal(String category, String meal) {
+  void _deleteMeal(String category, String meal, String time) {
     setState(() {
-      mealsByDate[selectedDate]?[category]?.remove(meal);
+      mealsByDate[selectedDate]?[category]?.removeWhere((mealData) =>
+      mealData['meal'] == meal && mealData['time'] == time);
       if (mealsByDate[selectedDate]?[category]?.isEmpty ?? true) {
         mealsByDate[selectedDate]?.remove(category);
       }
     });
   }
 
+  void _scheduleMealNotification(String meal, String time) async {
+    try {
+      List<String> timeParts = time.split(' ');
+      List<String> hourMinute = timeParts[0].split(':');
+      int hour = int.parse(hourMinute[0]);
+      int minute = int.parse(hourMinute[1]);
+      if (timeParts[1].toUpperCase() == 'PM' && hour != 12) {
+        hour += 12;
+      }
+      if (timeParts[1].toUpperCase() == 'AM' && hour == 12) {
+        hour = 0;
+      }
+
+      final notificationTime = tz.TZDateTime.from(selectedDate, tz.local).add(
+        Duration(hours: hour, minutes: minute),
+      );
+
+      await flutterLocalNotificationsPlugin.zonedSchedule(
+        DateTime.now().millisecondsSinceEpoch.remainder(100000), // Unique ID
+        'Meal Reminder',
+        '$meal is scheduled for $time',
+        notificationTime,
+        const NotificationDetails(
+          android: AndroidNotificationDetails(
+            'meal_channel',
+            'Meal Notifications',
+            importance: Importance.high,
+            priority: Priority.high,
+          ),
+        ),
+        uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.wallClockTime,
+        matchDateTimeComponents: DateTimeComponents.time,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle, // Ensure notification shows in idle state
+      );
+    } catch (e) {
+      debugPrint('Error scheduling notification: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final primaryColor = Colors.blue;
+
     return Scaffold(
       body: Stack(
         children: [
@@ -90,25 +162,21 @@ class _MealPlannerState extends State<MealPlanner> {
               children: [
                 Container(
                   padding: const EdgeInsets.only(top: 30),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        "Meal Planner",
-                        style: TextStyle(
-                          fontSize: 30.0,
-                          fontWeight: FontWeight.w900,
-                          color: primaryColor,
-                        ),
+                  child: Center(
+                    child: Text(
+                      "Meal Planner",
+                      style: TextStyle(
+                        fontSize: 30.0,
+                        fontWeight: FontWeight.w900,
+                        color: primaryColor,
                       ),
-                    ],
+                    ),
                   ),
                 ),
-                _navigationBox(_dayNavigation()),
-                _mealSection("Today", selectedDate),
-                _navigationBox(_weekNavigation()),
-                _mealSection("This Week", currentWeekStart),
-                _unscheduledMealsSection(),
+                _navigationBox(_dayNavigation(primaryColor)),
+                _mealSection("Today", selectedDate, primaryColor),
+                _navigationBox(_weekNavigation(primaryColor)),
+                _mealSection("This Week", currentWeekStart, primaryColor),
               ],
             ),
           ),
@@ -117,81 +185,67 @@ class _MealPlannerState extends State<MealPlanner> {
     );
   }
 
-  Widget _navigationBox(Widget navigationWidget) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10),
+  Widget _navigationBox(Widget child) {
+    return Padding(
       padding: const EdgeInsets.all(8.0),
-      decoration: BoxDecoration(
-        color: primaryColor,
-        borderRadius: BorderRadius.circular(30),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 5,
-            offset: Offset(0, 3),
-          ),
-        ],
+      child: Card(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: child,
       ),
-      child: navigationWidget,
     );
   }
 
-  Widget _dayNavigation() {
+  Widget _dayNavigation(Color primaryColor) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         IconButton(
+          icon: Icon(Icons.arrow_back, color: primaryColor),
           onPressed: () => _navigateDay(-1),
-          icon: const Icon(Icons.chevron_left, size: 24, color: Colors.white),
         ),
         Text(
-          "${selectedDate.day.toString().padLeft(2, '0')}-"
-              "${selectedDate.month.toString().padLeft(2, '0')}-"
-              "${selectedDate.year.toString().substring(2)}",
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+          "${selectedDate.toLocal()}".split(' ')[0],
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            color: primaryColor,
+          ),
         ),
         IconButton(
+          icon: Icon(Icons.arrow_forward, color: primaryColor),
           onPressed: () => _navigateDay(1),
-          icon: const Icon(Icons.chevron_right, size: 24, color: Colors.white),
         ),
       ],
     );
   }
 
-  Widget _weekNavigation() {
-    DateTime weekEnd = currentWeekStart.add(Duration(days: 6));
-
-    String startDate = "${currentWeekStart.day.toString().padLeft(2, '0')}-"
-        "${currentWeekStart.month.toString().padLeft(2, '0')}-"
-        "${currentWeekStart.year.toString().substring(2)}";
-
-    String endDate = "${weekEnd.day.toString().padLeft(2, '0')}-"
-        "${weekEnd.month.toString().padLeft(2, '0')}-"
-        "${weekEnd.year.toString()}";
-
+  Widget _weekNavigation(Color primaryColor) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         IconButton(
+          icon: Icon(Icons.arrow_back, color: primaryColor),
           onPressed: () => _navigateWeek(-1),
-          icon: const Icon(Icons.chevron_left, size: 24, color: Colors.white),
         ),
-        FittedBox(
-          fit: BoxFit.scaleDown,
-          child: Text(
-            "$startDate to $endDate",
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+        Text(
+          "Week of ${currentWeekStart.toLocal()}".split(' ')[0],
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            color: primaryColor,
           ),
         ),
         IconButton(
+          icon: Icon(Icons.arrow_forward, color: primaryColor),
           onPressed: () => _navigateWeek(1),
-          icon: const Icon(Icons.chevron_right, size: 24, color: Colors.white),
         ),
       ],
     );
   }
 
-  Widget _mealSection(String title, dynamic date) {
+  Widget _mealSection(String title, dynamic date, Color primaryColor) {
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Column(
@@ -199,7 +253,7 @@ class _MealPlannerState extends State<MealPlanner> {
         children: [
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 24.0,
               fontWeight: FontWeight.w700,
               color: primaryColor,
@@ -211,8 +265,8 @@ class _MealPlannerState extends State<MealPlanner> {
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemBuilder: (BuildContext context, int index) {
-              String category = mealCategories[index]['title'];
-              List<String> meals = mealsByDate[date]?[category] ?? [];
+              String category = mealCategories[index]['title']?? '';
+              List<Map<String, dynamic>> meals = mealsByDate[date]?[category] ?? [];
 
               return Card(
                 elevation: 3,
@@ -230,24 +284,25 @@ class _MealPlannerState extends State<MealPlanner> {
                         children: [
                           Text(
                             category,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 18,
                               color: primaryColor,
                             ),
                           ),
                           IconButton(
-                            icon: const Icon(Icons.add, color: primaryColor),
+                            icon: Icon(Icons.add, color: primaryColor),
                             onPressed: () => _addMeal(category),
                           ),
                         ],
                       ),
-                      ...meals.map((meal) {
+                      ...meals.map((mealData) {
                         return ListTile(
-                          title: Text(meal),
+                          title: Text(mealData['meal'] ?? ''),
+                          subtitle: Text('Time: ${mealData['time'] ?? ''}'),
                           trailing: IconButton(
                             icon: const Icon(Icons.delete, color: Colors.red),
-                            onPressed: () => _deleteMeal(category, meal),
+                            onPressed: () => _deleteMeal(category, mealData['meal'] ?? '', mealData['time'] ?? ''),
                           ),
                         );
                       }).toList(),
@@ -261,15 +316,11 @@ class _MealPlannerState extends State<MealPlanner> {
       ),
     );
   }
-
-  Widget _unscheduledMealsSection() {
-    return _mealSection("Unscheduled Meals", null);
-  }
 }
 
-final List<Map<String, dynamic>> mealCategories = [
-  {"title": "Breakfast", "meals": <String>[]},
-  {"title": "Lunch", "meals": <String>[]},
-  {"title": "Dinner", "meals": <String>[]},
-  {"title": "Snacks", "meals": <String>[]},
+const List<Map<String, String>> mealCategories = [
+  {'title': 'Breakfast'},
+  {'title': 'Lunch'},
+  {'title': 'Dinner'},
+  {'title': 'Snack'},
 ];
