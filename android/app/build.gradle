@@ -8,7 +8,7 @@ plugins {
 
 android {
     namespace = "com.example.mealmatch"
-    compileSdk = 34
+    compileSdk = 35
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -23,7 +23,7 @@ android {
     defaultConfig {
         applicationId = "com.example.mealmatch" // Updated Application ID
         minSdk = 23 // Ensure this matches your requirements
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
         multiDexEnabled true
