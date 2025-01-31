@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recipe Recommender</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 50px;
+        }
+        input, button {
+            padding: 10px;
+            font-size: 16px;
+        }
+        table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 10px;
+        }
+        img {
+            width: 100px;
+            height: 100px;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Recipe Recommender</h2>
+
+    <form action="/predict" method="post">
+        <input type="text" name="ingredients_name" placeholder="Enter ingredients (comma-separated)" required>
+        <button type="submit">Get Recipes</button>
+    </form>
+
+    {% if error %}
+        <p style="color: red;">{{ error }}</p>
+    {% endif %}
+
+    {% if recipes %}
+        <h3>Recommended Recipes:</h3>
+        <table>
+            <tr>
+                <th>Name</th>
+                <th>Image</th>
+                <th>Description</th>
+                <th>Cuisine</th>
+                <th>Prep Time (mins)</th>
+                <th>Cook Time (mins)</th>
+                <th>Total Time</th>
+                <th>Difficulty</th>
+            </tr>
+            {% for recipe in recipes %}
+            <tr>
+                <td>{{ recipe.name }}</td>
+                <td><img src="{{ recipe.image_url }}" alt="Recipe Image"></td>
+                <td>{{ recipe.description }}</td>
+                <td>{{ recipe.cuisine }}</td>
+                <td>{{ recipe["prep_time (in mins)"] }}</td>
+                <td>{{ recipe["cook_time (in mins)"] }}</td>
+                <td>{{ recipe.total_time }}</td>
+                <td>{{ recipe.difficulty_level }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    {% endif %}
+
+</body>
+</html>
