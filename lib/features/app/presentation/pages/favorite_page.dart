@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mealmatch/features/app/presentation/Model/recipe.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mealmatch/features/app/presentation/pages/recipe_detail_page.dart';
-import 'package:mealmatch/features/app/presentation/pages/recipe_search.dart';
+import 'package:mealmatch/features/app/presentation/pages/recipe_serach_c.dart';
 import 'package:mealmatch/features/app/presentation/pages/add_recipe.dart';
 
 class FavouritePage extends StatefulWidget {
@@ -12,16 +12,42 @@ class FavouritePage extends StatefulWidget {
   State<FavouritePage> createState() => _FavouritePageState();
 }
 
+
 class _FavouritePageState extends State<FavouritePage> {
   final List<Map<String, dynamic>> recipeCategories = [
-    {"title": "All Saved Recipes", "count": 14},
-    {"title": "All Personal Recipes", "count": 4},
     {"title": "Breakfast", "count": 0},
-    {"title": "Lunch", "count": 5},
-    {"title": "Dessert", "count": 3},
-    {"title": "Drink", "count": 2},
-    {"title": "Dinner", "count": 8},
+    {"title": "Lunch", "count": 0},
+    {"title": "Dessert", "count": 0},
+    {"title": "Drink", "count": 0},
+    {"title": "Dinner", "count": 0},
   ];
+
+  List<Recipe> allRecipes = [];  // All recipes stored here
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRecipes();
+  }
+
+  void _loadRecipes() {
+    // Fetch recipes from Recipe.dart file
+    allRecipes = Recipe.fetchRecipes(); // Call the static method to get the recipes
+    _updateRecipeCounts();  // Update the count of recipes in categories
+  }
+
+  // Update counts for each category dynamically
+  void _updateRecipeCounts() {
+    setState(() {
+      for (int i = 0; i < recipeCategories.length; i++) {
+        String category = recipeCategories[i]['title'];
+        recipeCategories[i]['count'] = allRecipes
+            .where((recipe) => recipe.course == category)
+            .toList()
+            .length;
+      }
+    });
+  }
 
   void _addNewCollection(String title, int count) {
     setState(() {
@@ -72,12 +98,17 @@ class _FavouritePageState extends State<FavouritePage> {
   }
 
   void _navigateToCategory(BuildContext context, String title) {
+    // Filter recipes based on the selected category
+    List<Recipe> filteredRecipes = allRecipes
+        .where((recipe) => recipe.course == title)
+        .toList();
+
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => FilteredRecipePage(
           course: title,
-          recipes: [],
+          recipes: filteredRecipes,
         ),
       ),
     );
@@ -88,10 +119,8 @@ class _FavouritePageState extends State<FavouritePage> {
     Size size = MediaQuery.of(context).size;
 
     return Scaffold(
-
       body: Stack(
         children: [
-
           Positioned.fill(
             child: Container(
               color: Color(0xffe7fae4),  // Set the background color you want
@@ -108,7 +137,7 @@ class _FavouritePageState extends State<FavouritePage> {
                       Text(
                         'Collections',
                         style: TextStyle(
-                          color: Color(0xff0c3934) ,
+                          color: Color(0xff0c3934),
                           fontWeight: FontWeight.w900,
                           fontSize: 35.0,
                         ),
@@ -118,7 +147,6 @@ class _FavouritePageState extends State<FavouritePage> {
                 ),
                 Container(
                   padding: const EdgeInsets.only(top: 20),
-
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
@@ -128,7 +156,7 @@ class _FavouritePageState extends State<FavouritePage> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => RecipeSearchPage(
+                              builder: (context) => RecipeSerachCPage(
                                 showFavoritesOnly: true, // Updated flag here
                               ),
                             ),
@@ -190,10 +218,8 @@ class _FavouritePageState extends State<FavouritePage> {
                         ),
                       ),
                     ],
-                  )
-
+                  ),
                 ),
-
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   height: size.height * .7,
@@ -256,6 +282,7 @@ class _FavouritePageState extends State<FavouritePage> {
     );
   }
 }
+
 
 class FilteredRecipePage extends StatelessWidget {
   final String course;

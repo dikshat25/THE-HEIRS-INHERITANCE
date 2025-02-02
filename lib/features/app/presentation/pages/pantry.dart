@@ -17,7 +17,7 @@ class PantryPage extends StatefulWidget {
 }
 
 class _PantryPageState extends State<PantryPage> {
-  List<Map<String, dynamic>> checklistItems = [];
+  List<Map<String, dynamic>> checklistItemsp = [];
   final List<Map<String, dynamic>> shoppingList = [];
   String selectedQuantity = '';
   String? selectedFraction;
@@ -31,7 +31,7 @@ class _PantryPageState extends State<PantryPage> {
   @override
   void initState() {
     super.initState();
-    _loadChecklistItems();
+    _loadchecklistItemsp();
   }
 
   @override
@@ -40,24 +40,24 @@ class _PantryPageState extends State<PantryPage> {
     super.dispose();
   }
 
-  Future<void> _loadChecklistItems() async {
+  Future<void> _loadchecklistItemsp() async {
     final prefs = await SharedPreferences.getInstance();
-    final String? checklistJson = prefs.getString('checklistItems');
+    final String? checklistJson = prefs.getString('checklistItemsp');
     if (checklistJson != null) {
       setState(() {
-        checklistItems = List<Map<String, dynamic>>.from(jsonDecode(checklistJson));
+        checklistItemsp = List<Map<String, dynamic>>.from(jsonDecode(checklistJson));
       });
     }
   }
 
-  Future<void> _saveChecklistItems() async {
+  Future<void> _savechecklistItemsp() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('checklistItems', jsonEncode(checklistItems));
+    await prefs.setString('checklistItemsp', jsonEncode(checklistItemsp));
   }
 
   void _addItemToChecklist(String itemName, String itemDescription, String text, File? image) {
     setState(() {
-      checklistItems.add({
+      checklistItemsp.add({
         'itemName': itemName,
         'itemDescription': itemDescription,
         'isChecked': false,
@@ -68,41 +68,41 @@ class _PantryPageState extends State<PantryPage> {
         'timestamp': DateTime.now().toIso8601String(), // Add timestamp
         'image': image, // Store the image if available
       });
-      _saveChecklistItems(); // Save the updated list
+      _savechecklistItemsp(); // Save the updated list
     });
   }
 
 
   void _toggleChecklistItem(int index) {
     setState(() {
-      checklistItems[index]['isChecked'] = !checklistItems[index]['isChecked'];
-      _saveChecklistItems(); // Save the updated list
+      checklistItemsp[index]['isChecked'] = !checklistItemsp[index]['isChecked'];
+      _savechecklistItemsp(); // Save the updated list
     });
   }
 
   void _removeChecklistItem(int index) {
     setState(() {
-      checklistItems.removeAt(index);
-      _saveChecklistItems(); // Save the updated list
+      checklistItemsp.removeAt(index);
+      _savechecklistItemsp(); // Save the updated list
     });
   }
 
   void _sortChecklist() {
     setState(() {
       if (sortBy == 'Name') {
-        checklistItems.sort((a, b) => a['itemName'].compareTo(b['itemName']));
+        checklistItemsp.sort((a, b) => a['itemName'].compareTo(b['itemName']));
       } else if (sortBy == 'Category') {
-        checklistItems.sort((a, b) => a['category'].compareTo(b['category']));
+        checklistItemsp.sort((a, b) => a['category'].compareTo(b['category']));
       } else if (sortBy == 'Quantity') {
-        checklistItems.sort((a, b) => a['quantity'].compareTo(b['quantity']));
+        checklistItemsp.sort((a, b) => a['quantity'].compareTo(b['quantity']));
       } else if (sortBy == 'Last Added First') {
-        checklistItems.sort((a, b) {
+        checklistItemsp.sort((a, b) {
           var timeA = DateTime.parse(a['timestamp']);
           var timeB = DateTime.parse(b['timestamp']);
           return timeB.compareTo(timeA); // Last added items come first
         });
       }
-      _saveChecklistItems(); // Save the updated list
+      _savechecklistItemsp(); // Save the updated list
     });
   }
 
@@ -299,13 +299,13 @@ class _PantryPageState extends State<PantryPage> {
                                   selectedImage, // Pass the selected image as part of the checklist item
                                 );
 
-                                // Clear inputs
+                                // Clear inputs after adding item
                                 itemNameController.clear();
                                 itemDescriptionController.clear();
-                                selectedQuantity = null;
+                                selectedQuantity = ''; // Reset quantity to an empty string after use
                                 selectedFraction = null;
                                 selectedUnit = null;
-                                selectedImage = null; // Clear the selected image after adding
+                                selectedImage = null; // Clear selected image after adding
 
                                 Navigator.pop(context); // Close the bottom sheet
                               } else {
@@ -439,10 +439,12 @@ class _PantryPageState extends State<PantryPage> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => PantrySearchPage(checklistItems: checklistItems),
+                              builder: (context) => PantrySearchPage(checklistItems: checklistItemsp), // Corrected parameter name
                             ),
                           );
                         },
+
+
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 10.0),
                           width: size.width * .9,
@@ -489,7 +491,7 @@ class _PantryPageState extends State<PantryPage> {
                           mainAxisAlignment: MainAxisAlignment.start,
                           children: [
                             Text(
-                              "${checklistItems.length} ${checklistItems.length == 1 ? 'item' : 'items'}",
+                              "${checklistItemsp.length} ${checklistItemsp.length == 1 ? 'item' : 'items'}",
                               style: const TextStyle(
                                 fontSize: 20.0,
                                 fontWeight: FontWeight.w700,
@@ -559,7 +561,7 @@ class _PantryPageState extends State<PantryPage> {
                   child: ListView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    itemCount: checklistItems.length,
+                    itemCount: checklistItemsp.length,
                     itemBuilder: (context, index) {
                       return Container(
                         decoration: BoxDecoration(
@@ -585,15 +587,15 @@ class _PantryPageState extends State<PantryPage> {
                                     color: Colors.grey, // Border color (optional)
                                     width: 1, // Border width
                                   ),
-                                  color: checklistItems[index]['image'] == null
+                                  color: checklistItemsp[index]['image'] == null
                                       ? Color(0xffe8bbbb) // Pink box if image is null
                                       : null, // No background color if the image is not null
                                 ),
-                                child: checklistItems[index]['image'] != null
+                                child: checklistItemsp[index]['image'] != null
                                     ? ClipRRect(
                                   borderRadius: BorderRadius.circular(8), // Ensures image has rounded corners
                                   child: Image.file(
-                                    checklistItems[index]['image']!,
+                                    checklistItemsp[index]['image']!,
                                     fit: BoxFit.cover, // Ensures image fills the container
                                   ),
                                 )
@@ -611,7 +613,7 @@ class _PantryPageState extends State<PantryPage> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  checklistItems[index]['itemName']!,
+                                  checklistItemsp[index]['itemName']!,
                                   style: const TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 18,
@@ -622,7 +624,7 @@ class _PantryPageState extends State<PantryPage> {
                                 Row(
                                   children: [
                                     Text(
-                                      '${checklistItems[index]['quantity']?.toString() ?? ""} ${checklistItems[index]['fraction'] ?? ""} ${checklistItems[index]['unit'] ?? ""}',
+                                      '${checklistItemsp[index]['quantity']?.toString() ?? ""} ${checklistItemsp[index]['fraction'] ?? ""} ${checklistItemsp[index]['unit'] ?? ""}',
                                       style: const TextStyle(
                                         fontSize: 14,
                                         color: Colors.black54,
@@ -630,7 +632,7 @@ class _PantryPageState extends State<PantryPage> {
                                     ),
                                     const SizedBox(width: 10),
                                     Text(
-                                      checklistItems[index]['category'] ?? '',
+                                      checklistItemsp[index]['category'] ?? '',
                                       style: const TextStyle(
                                         fontSize: 14,
                                         color: Colors.black54,
@@ -640,7 +642,7 @@ class _PantryPageState extends State<PantryPage> {
                                 ),
                                 const SizedBox(height: 5),
                                 Text(
-                                  checklistItems[index]['itemDescription']!,
+                                  checklistItemsp[index]['itemDescription']!,
                                   style: const TextStyle(
                                     fontSize: 14,
                                     color: Colors.black,
@@ -655,11 +657,11 @@ class _PantryPageState extends State<PantryPage> {
 
                                 // Checkbox
                                 Checkbox(
-                                  value: checklistItems[index]['isChecked'],
+                                  value: checklistItemsp[index]['isChecked'],
                                   onChanged: (bool? value) {
                                     setState(() {
-                                      checklistItems[index]['isChecked'] = value ?? false;
-                                      _saveChecklistItems(); // Save the state after change
+                                      checklistItemsp[index]['isChecked'] = value ?? false;
+                                      _savechecklistItemsp(); // Save the state after change
                                     });
                                   },
                                   activeColor: Colors.green[900],
@@ -670,8 +672,8 @@ class _PantryPageState extends State<PantryPage> {
                                   color: Colors.red[900],
                                   onPressed: () {
                                     setState(() {
-                                      checklistItems.removeAt(index);
-                                      _saveChecklistItems(); // Save after deletion
+                                      checklistItemsp.removeAt(index);
+                                      _savechecklistItemsp(); // Save after deletion
                                     });
                                   },
                                 ),
@@ -692,9 +694,15 @@ class _PantryPageState extends State<PantryPage> {
     );
   }
 
+
+
   // Widget for Quantity Content
   Widget _quantityContent(StateSetter setState) {
-    TextEditingController quantityController = TextEditingController(text: selectedQuantity); // Set initial value
+    // Generate a list of quantities from 1 to 100
+    List<String> availableQuantities = List.generate(100, (index) => (index + 1).toString());
+
+    // Set quantityController's text based on selectedQuantity (initial value).
+    quantityController.text = selectedQuantity;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -713,7 +721,7 @@ class _PantryPageState extends State<PantryPage> {
                 keyboardType: TextInputType.numberWithOptions(decimal: true),
                 onChanged: (value) {
                   setState(() {
-                    selectedQuantity = value;
+                    selectedQuantity = value; // Update selectedQuantity when text changes.
                   });
                 },
                 decoration: InputDecoration(
@@ -735,7 +743,7 @@ class _PantryPageState extends State<PantryPage> {
                 }).toList(),
                 onChanged: (value) {
                   setState(() {
-                    selectedFraction = value;
+                    selectedFraction = value!;
                   });
                 },
                 decoration: const InputDecoration(
@@ -749,14 +757,11 @@ class _PantryPageState extends State<PantryPage> {
                 value: selectedUnit,
                 items: ["unit", "kg", "g", "lb", "oz"]
                     .map((unit) =>
-                    DropdownMenuItem<String>(
-                      value: unit,
-                      child: Text(unit),
-                    ))
+                    DropdownMenuItem<String>(value: unit, child: Text(unit)))
                     .toList(),
                 onChanged: (value) {
                   setState(() {
-                    selectedUnit = value;
+                    selectedUnit = value!;
                   });
                 },
                 decoration: const InputDecoration(
@@ -770,6 +775,8 @@ class _PantryPageState extends State<PantryPage> {
       ],
     );
   }
+
+
 
 
 // Widget for Category Content

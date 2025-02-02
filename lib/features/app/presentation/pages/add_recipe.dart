@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
+import 'package:mealmatch/features/app/presentation/Model/recipe.dart';
+import 'package:uuid/uuid.dart';
 
 class AddRecipePage extends StatefulWidget {
   const AddRecipePage({Key? key}) : super(key: key);
@@ -18,6 +20,7 @@ class _AddRecipePageState extends State<AddRecipePage> {
   String? _selectedDiet;
   List<XFile> _images = [];
   List<Map<String, String>> _ingredients = []; // List to store ingredients and quantities
+  static List<Recipe> savedRecipes = [];
 
   final List<String> courses = ['Breakfast', 'Lunch', 'Dinner', 'Dessert', 'Drink'];
   final List<String> diets = ['Vegetarian', 'Non-Vegetarian', 'Vegan', 'Gluten-Free'];
@@ -27,6 +30,36 @@ class _AddRecipePageState extends State<AddRecipePage> {
   final ScrollController _categoryScrollController = ScrollController();
 
   int selectedIndex = 0;
+
+  void _saveRecipe() {
+    // Create a new Recipe object (you should collect data from form fields)
+    Recipe newRecipe = Recipe(
+      recipeId: Uuid().v4(),
+      name: "New Recipe",
+      description: "Description of the recipe",
+      cuisine: "Cuisine",
+      course: "Course",
+      diet: "Diet",
+      ingredientsName: ['Ingredient 1', 'Ingredient 2'],
+      ingredientsQuantity: ['1 cup', '2 tbsp'],
+      prepTime: 10,
+      cookTime: 20,
+      instructions: "Instructions here.",
+      imageURL: "path/to/image",
+      totalTime: 30,
+      recipeTags: ['Tag1', 'Tag2'],
+      difficultyLevel: "Easy",
+      ingredientCategory: "Category",
+    );
+
+    // Add the new recipe to the list
+    setState(() {
+      savedRecipes.add(newRecipe);
+    });
+
+    // Navigate back to the FavouritePage (optional)
+    Navigator.pop(context);
+  }
 
   Future<void> _pickImages() async {
     final List<XFile>? pickedImages = await _picker.pickMultiImage();
@@ -79,12 +112,12 @@ class _AddRecipePageState extends State<AddRecipePage> {
   }
 
   // Save Recipe (Placeholder function)
-  void _saveRecipe() {
+  /*void _saveRecipe() {
     if (_formKey.currentState!.validate()) {
       // Collect the recipe details and proceed
       print("Recipe Saved");
     }
-  }
+  }*/
 
   // Handle instructions section with bullet points
   void _handleEnterKey(String value) {
@@ -486,5 +519,4 @@ class _AddRecipePageState extends State<AddRecipePage> {
     );
   }
 }
-
 

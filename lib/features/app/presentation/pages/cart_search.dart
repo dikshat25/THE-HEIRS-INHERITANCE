@@ -1,26 +1,26 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
-class cartSearchPage extends StatefulWidget {
+class CartSearchPage extends StatefulWidget {
   final List<Map<String, dynamic>> checklistItems;
 
-  const cartSearchPage({super.key, required this.checklistItems});
+  const CartSearchPage({super.key, required this.checklistItems});
 
   @override
-  State<cartSearchPage> createState() => _cartSearchPageState();
+  State<CartSearchPage> createState() => _CartSearchPageState();
 }
 
-class _cartSearchPageState extends State<cartSearchPage> {
+class _CartSearchPageState extends State<CartSearchPage> {
   final TextEditingController _searchController = TextEditingController();
   List<Map<String, dynamic>> _filteredItems = [];
 
   @override
   void initState() {
     super.initState();
+    print(widget.checklistItems);
     _filteredItems = List.from(widget.checklistItems); // Initially show all items
   }
 
-  void _filtercartItems(String query) {
+  void _filterCartItems(String query) {
     if (query.isEmpty) {
       setState(() {
         _filteredItems = List.from(widget.checklistItems); // Reset to all items when query is empty
@@ -31,7 +31,7 @@ class _cartSearchPageState extends State<cartSearchPage> {
     List<String> queryWords = query.toLowerCase().split(' ');
 
     final results = widget.checklistItems.where((item) {
-      String itemName = item['name']?.toLowerCase() ?? ''; // Safely handle null values
+      String itemName = item['itemName']?.toLowerCase() ?? ''; // Use itemName from checklistItems
       return queryWords.any((word) => itemName.contains(word));
     }).toList();
 
@@ -40,11 +40,15 @@ class _cartSearchPageState extends State<cartSearchPage> {
     });
   }
 
+  void _saveCartItems() async {
+    // Code to save the cart items, for example, using SharedPreferences
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Search cart' , style: TextStyle(color: Colors.white),),
+        title: const Text('Search Cart', style: TextStyle(color: Colors.white)),
         backgroundColor: const Color(0xff437069),
       ),
       body: SingleChildScrollView(
@@ -54,7 +58,7 @@ class _cartSearchPageState extends State<cartSearchPage> {
               padding: const EdgeInsets.all(16.0),
               child: TextField(
                 controller: _searchController,
-                onChanged: (value) => _filtercartItems(value),
+                onChanged: (value) => _filterCartItems(value),
                 decoration: InputDecoration(
                   hintText: 'Search your cart...',
                   prefixIcon: const Icon(Icons.search, color: Colors.black54),
@@ -63,7 +67,7 @@ class _cartSearchPageState extends State<cartSearchPage> {
                     icon: const Icon(Icons.clear, color: Colors.black54),
                     onPressed: () {
                       _searchController.clear();
-                      _filtercartItems('');
+                      _filterCartItems('');
                     },
                   )
                       : null,
@@ -77,7 +81,7 @@ class _cartSearchPageState extends State<cartSearchPage> {
                 ),
               ),
             ),
-            // cart items list
+            // Cart items list
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
@@ -98,48 +102,119 @@ class _cartSearchPageState extends State<cartSearchPage> {
                       itemCount: _filteredItems.length,
                       itemBuilder: (context, index) {
                         final item = _filteredItems[index];
-                        return GestureDetector(
-                          onTap: () {
-                            // Handle item tap, navigate to detailed page if needed
-                          },
-                          child: Card(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(15),
-                            ),
-                            margin: const EdgeInsets.symmetric(vertical: 8),
-                            elevation: 3,
-                            child: Padding(
-                              padding: const EdgeInsets.all(10.0),
-                              child: Row(
-                                children: [
-                                  ClipRRect(
-                                    borderRadius: BorderRadius.circular(8.0),
+                        return Container(
+                          decoration: BoxDecoration(
+                            color: const Color(0xff00E390).withOpacity(.16),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          height: 100.0,
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          margin: const EdgeInsets.only(bottom: 10),
+                          width: double.infinity,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.only(right: 10),
+                                child: Container(
+                                  width: 80, // Fixed width
+                                  height: 80, // Fixed height to make it square
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(8), // Optional: rounded corners
+                                    border: Border.all(
+                                      color: Colors.grey, // Border color (optional)
+                                      width: 1, // Border width
+                                    ),
+                                    color: item['image'] == null
+                                        ? Color(0xffe8bbbb) // Pink box if image is null
+                                        : null, // No background color if the image is not null
+                                  ),
+                                  child: item['image'] != null
+                                      ? ClipRRect(
+                                    borderRadius: BorderRadius.circular(8), // Ensures image has rounded corners
                                     child: Image.asset(
                                       item['image'] ?? 'assets/default_image.jpg', // Default image if null
-                                      width: 60,
-                                      height: 60,
-                                      fit: BoxFit.cover,
+                                      fit: BoxFit.cover, // Ensures image fills the container
+                                    ),
+                                  )
+                                      : const Icon(
+                                    Icons.image, // Placeholder icon when image is null
+                                    color: Colors.white,
+                                    size: 40,
+                                  ),
+                                ),
+                              ),
+                              // Left side of the cart item
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    item['itemName'] ?? 'No Name', // Use itemName from checklistItems
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 18,
+                                      color: Color(0xff00473d),
                                     ),
                                   ),
-                                  const SizedBox(width: 16),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          item['name'] ?? 'No Name', // Fallback to 'No Name' if null
-                                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                  const SizedBox(height: 5),
+                                  Row(
+                                    children: [
+                                      Text(
+                                        '${item['quantity']?.toString() ?? ""} ${item['fraction'] ?? ""} ${item['unit'] ?? ""}',
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.black54,
                                         ),
-                                        Text(
-                                          item['description'] ?? 'No Description', // Fallback to 'No Description' if null
-                                          style: const TextStyle(color: Colors.grey),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Text(
+                                        item['category'] ?? '',
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.black54,
                                         ),
-                                      ],
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 5),
+                                  Text(
+                                    item['itemDescription'] ?? 'No Description', // Use itemDescription
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.black,
                                     ),
                                   ),
                                 ],
                               ),
-                            ),
+                              // Right side with checkbox and delete button
+                              Row(
+                                children: [
+                                  // Checkbox (if needed for cart items)
+                                  Checkbox(
+                                    value: item['isChecked'],
+                                    onChanged: (bool? value) {
+                                      setState(() {
+                                        item['isChecked'] = value ?? false;
+                                        _saveCartItems(); // Save the state after change
+                                      });
+                                    },
+                                    activeColor: Colors.green[900],
+                                  ),
+                                  // Delete button
+                                  IconButton(
+                                    icon: const Icon(Icons.delete),
+                                    color: Colors.red[900],
+                                    onPressed: () {
+                                      setState(() {
+                                        _filteredItems.removeAt(index);
+                                        _saveCartItems(); // Save after deletion
+                                      });
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
                         );
                       },

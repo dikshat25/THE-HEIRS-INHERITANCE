@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:mealmatch/features/app/presentation/pages/root_page.dart'; // Your root page
-
+//import 'package:mealmatch/features/app/presentation/pages/root_page.dart'; // Your root page
+import 'package:mealmatch/features/app/presentation/pages/login.dart';
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({Key? key}) : super(key: key);
 
@@ -25,7 +25,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             child: InkWell(
               onTap: () {
                 Navigator.pushReplacement(
-                    context, MaterialPageRoute(builder: (_) => const RootPage())); // Navigate to home screen
+                    context, MaterialPageRoute(builder: (_) => const MyLogin())); // Navigate to home screen
               },
               child: const Text(
                 'Skip',
@@ -101,7 +101,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         }
                       } else {
                         Navigator.pushReplacement(context,
-                            MaterialPageRoute(builder: (_) => const RootPage()));
+                            MaterialPageRoute(builder: (_) => const MyLogin()));
                       }
                     });
                   },

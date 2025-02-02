@@ -81,7 +81,7 @@ class _ScanImgState extends State<ScanImg> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Scan to Add'),
+        title: const Text('Scan to Add', style: TextStyle(color: Colors.white)),
         backgroundColor: const Color(0xff1b534c),
         elevation: 0,
       ),

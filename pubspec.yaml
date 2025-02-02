@@ -58,6 +58,11 @@ dependencies:
   timezone: ^0.10.0
   intl: ^0.20.2
   permission_handler: ^11.3.1
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+  path_provider: ^2.1.5
+  http: ^1.3.0
+  uuid: ^4.5.1
 
 
 
@@ -106,6 +111,21 @@ flutter:
     - Assets/meal8.png
     - Assets/small200recipes.csv
     - Assets/food_products.csv
+    - Assets/avocadotoast.webp
+    - Assets/beef.jpeg
+    - Assets/cheesesandwich.webp
+    - Assets/chickenceasarsalad.jpg
+    - Assets/chickensoup.jpeg
+    - Assets/cookie.jpg
+    - Assets/eggsalad.jpeg
+    - Assets/fishtacos.jpeg
+    - Assets/gardensalad.jpg
+    - Assets/gardensalad.jpg
+    - Assets/spagetti.jpg
+    - Assets/tomatosoup.jpeg
+    - Assets/pineapplesmoothie.webp
+
+
 
 
 

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
+import 'package:intl/intl.dart';
+
 
 class MealPlanner extends StatefulWidget {
   const MealPlanner({super.key});
@@ -51,25 +53,77 @@ class _MealPlannerState extends State<MealPlanner> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text("Add Meal to $category"),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: mealController,
-              decoration: const InputDecoration(hintText: "Enter meal name"),
-            ),
-            TextField(
-              controller: timeController,
-              decoration: const InputDecoration(hintText: "Enter time (e.g., 8:00 AM)"),
-            ),
-          ],
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(15),  // Rounded corners for the dialog
+        ),
+        backgroundColor: Colors.white,  // White background for clarity
+        title: Text(
+          "Add Meal to $category",
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: Colors.black,
+          ),
+        ),
+        content: Padding(
+          padding: const EdgeInsets.only(top: 8.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Meal Name Field
+              TextField(
+                controller: mealController,
+                decoration: InputDecoration(
+                  hintText: "Enter meal name",
+                  hintStyle: TextStyle(color: Colors.grey),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: Colors.grey),
+                  ),
+                  filled: true,
+                  fillColor: Color(0xfff2f2f2),  // Light background for input field
+                  contentPadding: EdgeInsets.all(12),
+                ),
+              ),
+              const SizedBox(height: 16),  // Space between fields
+
+              // Meal Time Field
+              TextField(
+                controller: timeController,
+                decoration: InputDecoration(
+                  hintText: "Enter time (e.g., 8:00 AM)",
+                  hintStyle: TextStyle(color: Colors.grey),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: Colors.grey),
+                  ),
+                  filled: true,
+                  fillColor: Color(0xfff2f2f2),  // Light background for input field
+                  contentPadding: EdgeInsets.all(12),
+                ),
+              ),
+            ],
+          ),
         ),
         actions: [
+          // Cancel Button with style
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text("Cancel"),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.white,  // Text color
+              backgroundColor: Colors.grey[400],  // Background color
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            ),
+            child: Text(
+              "Cancel",
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
+
+          // Add Button with style
           TextButton(
             onPressed: () {
               if (mealController.text.isNotEmpty && timeController.text.isNotEmpty) {
@@ -87,12 +141,24 @@ class _MealPlannerState extends State<MealPlanner> {
               }
               Navigator.pop(context);
             },
-            child: const Text("Add"),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.white,  // Text color
+              backgroundColor: Color(0xff00E390),  // Custom green color for the button
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            ),
+            child: Text(
+              "Add",
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),
     );
   }
+
 
   void _deleteMeal(String category, String meal, String time) {
     setState(() {
@@ -145,24 +211,23 @@ class _MealPlannerState extends State<MealPlanner> {
 
   @override
   Widget build(BuildContext context) {
-    final primaryColor = Colors.blue;
+    final primaryColor = Colors.black;
+    final backgroundColor = Color(0xffe7fae4);
 
     return Scaffold(
       body: Stack(
         children: [
           Positioned.fill(
-            child: Image.asset(
-              'Assets/loginbackground.jpg',
-              fit: BoxFit.cover,
-            ),
+            child: Container(
+              color: backgroundColor,
+            )
           ),
           SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding: const EdgeInsets.only(top: 30),
-                  child: Center(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start, // Left align the children
+                children: [
+                  Container(
+                    padding: const EdgeInsets.only(top: 30, left: 30 , bottom: 30),
                     child: Text(
                       "Meal Planner",
                       style: TextStyle(
@@ -172,13 +237,13 @@ class _MealPlannerState extends State<MealPlanner> {
                       ),
                     ),
                   ),
-                ),
-                _navigationBox(_dayNavigation(primaryColor)),
-                _mealSection("Today", selectedDate, primaryColor),
-                _navigationBox(_weekNavigation(primaryColor)),
-                _mealSection("This Week", currentWeekStart, primaryColor),
-              ],
-            ),
+                  _navigationBox(_dayNavigation(primaryColor)),
+                  _mealSection("Today", selectedDate, primaryColor),
+                  _navigationBox(_weekNavigation(primaryColor)),
+                  _mealSection("This Week", currentWeekStart, primaryColor),
+                ],
+              )
+
           ),
         ],
       ),
@@ -187,85 +252,114 @@ class _MealPlannerState extends State<MealPlanner> {
 
   Widget _navigationBox(Widget child) {
     return Padding(
-      padding: const EdgeInsets.all(8.0),
+      padding: const EdgeInsets.all(10.0),
       child: Card(
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(12),  // More rounded corners
         ),
+        elevation: 4,  // Subtle shadow for elevation
         child: child,
       ),
     );
   }
 
   Widget _dayNavigation(Color primaryColor) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        IconButton(
-          icon: Icon(Icons.arrow_back, color: primaryColor),
-          onPressed: () => _navigateDay(-1),
-        ),
-        Text(
-          "${selectedDate.toLocal()}".split(' ')[0],
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-            color: primaryColor,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 12.0),
+      decoration: BoxDecoration(
+        color: Color(0xfff5fdf1),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.2),
+            blurRadius: 4,
+            offset: Offset(0, 2),
           ),
-        ),
-        IconButton(
-          icon: Icon(Icons.arrow_forward, color: primaryColor),
-          onPressed: () => _navigateDay(1),
-        ),
-      ],
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          IconButton(
+            icon: Icon(Icons.arrow_back, color: primaryColor),
+            onPressed: () => _navigateDay(-1),
+          ),
+          Text(
+            "${selectedDate.toLocal()}".split(' ')[0],
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: primaryColor,
+            ),
+          ),
+          IconButton(
+            icon: Icon(Icons.arrow_forward, color: primaryColor),
+            onPressed: () => _navigateDay(1),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _weekNavigation(Color primaryColor) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        IconButton(
-          icon: Icon(Icons.arrow_back, color: primaryColor),
-          onPressed: () => _navigateWeek(-1),
-        ),
-        Text(
-          "Week of ${currentWeekStart.toLocal()}".split(' ')[0],
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-            color: primaryColor,
+    // Format the date properly using DateFormat
+    String formattedWeekStart = DateFormat('MMMM dd, yyyy').format(currentWeekStart);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 12.0),
+      decoration: BoxDecoration(
+        color: Color(0xfff5fdf1),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.2),
+            blurRadius: 4,
+            offset: Offset(0, 2),
           ),
-        ),
-        IconButton(
-          icon: Icon(Icons.arrow_forward, color: primaryColor),
-          onPressed: () => _navigateWeek(1),
-        ),
-      ],
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          IconButton(
+            icon: Icon(Icons.arrow_back, color: primaryColor),
+            onPressed: () => _navigateWeek(-1),
+          ),
+          Text(
+            "Week of $formattedWeekStart",  // Display "Week of [formatted date]"
+            style: TextStyle(
+              fontSize: 18 ,
+              fontWeight: FontWeight.bold,
+              color: primaryColor,
+            ),
+          ),
+          IconButton(
+            icon: Icon(Icons.arrow_forward, color: primaryColor),
+            onPressed: () => _navigateWeek(1),
+          ),
+        ],
+      ),
     );
   }
 
+
   Widget _mealSection(String title, dynamic date, Color primaryColor) {
     return Padding(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             title,
-            style: TextStyle(
-              fontSize: 24.0,
-              fontWeight: FontWeight.w700,
-              color: primaryColor,
-            ),
+            style: TextStyle(fontSize: 24.0, fontWeight: FontWeight.w700, color: primaryColor),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 16),
           ListView.builder(
             itemCount: mealCategories.length,
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemBuilder: (BuildContext context, int index) {
-              String category = mealCategories[index]['title']?? '';
+              String category = mealCategories[index]['title'] ?? '';
               List<Map<String, dynamic>> meals = mealsByDate[date]?[category] ?? [];
 
               return Card(
@@ -284,11 +378,7 @@ class _MealPlannerState extends State<MealPlanner> {
                         children: [
                           Text(
                             category,
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 18,
-                              color: primaryColor,
-                            ),
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: primaryColor),
                           ),
                           IconButton(
                             icon: Icon(Icons.add, color: primaryColor),
@@ -297,12 +387,20 @@ class _MealPlannerState extends State<MealPlanner> {
                         ],
                       ),
                       ...meals.map((mealData) {
-                        return ListTile(
-                          title: Text(mealData['meal'] ?? ''),
-                          subtitle: Text('Time: ${mealData['time'] ?? ''}'),
-                          trailing: IconButton(
-                            icon: const Icon(Icons.delete, color: Colors.red),
-                            onPressed: () => _deleteMeal(category, mealData['meal'] ?? '', mealData['time'] ?? ''),
+                        return Container(
+                          decoration: BoxDecoration(
+                            color: const Color(0xff00E390).withOpacity(.16), // Apply background color with opacity
+                            borderRadius: BorderRadius.circular(10), // Rounded corners
+                          ),
+                          margin: const EdgeInsets.symmetric(vertical: 8),
+                          padding: const EdgeInsets.all(12),
+                          child: ListTile(
+                            title: Text(mealData['meal'] ?? '', style: TextStyle(fontSize: 16)),
+                            subtitle: Text('Time: ${mealData['time'] ?? ''}', style: TextStyle(color: Colors.grey)),
+                            trailing: IconButton(
+                              icon: const Icon(Icons.delete, color: Colors.red),
+                              onPressed: () => _deleteMeal(category, mealData['meal'] ?? '', mealData['time'] ?? ''),
+                            ),
                           ),
                         );
                       }).toList(),
@@ -316,6 +414,8 @@ class _MealPlannerState extends State<MealPlanner> {
       ),
     );
   }
+
+
 }
 
 const List<Map<String, String>> mealCategories = [

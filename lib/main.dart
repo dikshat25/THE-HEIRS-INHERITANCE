@@ -19,6 +19,9 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:permission_handler/permission_handler.dart';
+import 'package:hive/hive.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,6 +31,8 @@ void main() async {
 
   // Initialize Firebase
   await Firebase.initializeApp();
+
+  await Hive.initFlutter();
 
   // Initialize Timezone
   tz.initializeTimeZones();
@@ -92,7 +97,7 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      initialRoute: 'root',
+      initialRoute: 'splashscreen',
       routes: {
         'login': (context) => MyLogin(),
         'register': (context) => MyRegister(),

@@ -23,7 +23,7 @@ class AccountsPage extends StatefulWidget {
 }
 
 class _AccountsPageState extends State<AccountsPage> {
-  String username = "John Doe";
+  String username = "Prachi Shende";
   String profileImagePath = ''; // Path to the profile image
 
   @override
@@ -36,7 +36,7 @@ class _AccountsPageState extends State<AccountsPage> {
   void _loadProfileData() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      username = prefs.getString('username') ?? "John Doe";
+      username = prefs.getString('username') ?? "Prachi Shende";
       profileImagePath = prefs.getString('profileImagePath') ?? '';
     });
   }
@@ -126,7 +126,7 @@ class _AccountsPageState extends State<AccountsPage> {
                         textAlign: TextAlign.center,
                       ),
                       Text(
-                        'johndoe@gmail.com',
+                        'prachipshende97@gmail.com',
                         style: TextStyle(
                           color: Colors.black.withOpacity(.3),
                         ),
@@ -534,6 +534,8 @@ class _MyAccountPageState extends State<MyAccountPage> {
 
 
 
+
+
 class DietaryPreferencesPage extends StatefulWidget {
   const DietaryPreferencesPage({super.key});
 
@@ -546,14 +548,14 @@ class _DietaryPreferencesPageState extends State<DietaryPreferencesPage> {
     'Diets': ['Vegetarian', 'Vegan', 'Non vegetarian'],
     'Allergies': ['Dairy', 'Nuts', 'Gluten', 'Eggs', 'Shellfish', 'Soy', 'Sea Food', 'Sesame'],
     'Favorite Cuisines': ['Italian', 'Chinese', 'Indian', 'Mexican', 'Japanese', 'Thai'],
-    'Disliked Ingredients': ['Onions', 'Garlic', 'Tomatoes', 'Cilantro', 'Mushrooms'], // Default values for disliked ingredients
+    'Disliked Ingredients': [], // Start with an empty list
   };
 
   final Map<String, Set<String>> selectedPreferences = {
     'Diets': {},
     'Allergies': {},
     'Favorite Cuisines': {},
-    'Disliked Ingredients': {}, // Initialize as an empty set for consistency
+    'Disliked Ingredients': {},
   };
 
   final TextEditingController _ingredientController = TextEditingController();
@@ -571,7 +573,13 @@ class _DietaryPreferencesPageState extends State<DietaryPreferencesPage> {
       final Map<String, dynamic> loadedPreferences = jsonDecode(savedData);
       setState(() {
         loadedPreferences.forEach((key, value) {
-          selectedPreferences[key] = (value as List<dynamic>).map((e) => e.toString()).toSet();
+          // Remove any invalid selections based on the updated categories
+          if (categories[key] != null) {
+            selectedPreferences[key] = (value as List<dynamic>)
+                .where((item) => categories[key]!.contains(item))
+                .map((e) => e.toString())
+                .toSet();
+          }
         });
       });
     }
@@ -623,22 +631,14 @@ class _DietaryPreferencesPageState extends State<DietaryPreferencesPage> {
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),
             Text(
-              '${selectedPreferences[category]!.length} selected', // Correct way to show the selected count
+              '${selectedPreferences[category]!.length} selected',
               style: const TextStyle(fontSize: 14, color: Colors.grey),
             ),
           ],
         ),
         children: category == 'Disliked Ingredients'
             ? [
-          ...categories[category]!.map((item) {
-            return ListTile(
-              title: Text(item),
-              trailing: IconButton(
-                icon: const Icon(Icons.cancel, color: Colors.red),
-                onPressed: () => _removeDislikedIngredient(item),
-              ),
-            );
-          }).toList(),
+          // User input section to add disliked ingredients
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: Row(
@@ -666,13 +666,23 @@ class _DietaryPreferencesPageState extends State<DietaryPreferencesPage> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 25),
+                    padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 25),
                     elevation: 0,
                   ),
-                )
+                ),
               ],
             ),
           ),
+          // List of disliked ingredients
+          ...categories['Disliked Ingredients']!.map((item) {
+            return ListTile(
+              title: Text(item),
+              trailing: IconButton(
+                icon: const Icon(Icons.cancel, color: Colors.red),
+                onPressed: () => _removeDislikedIngredient(item),
+              ),
+            );
+          }).toList(),
         ]
             : categories[category]!.map((item) {
           return Theme(

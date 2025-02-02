@@ -300,13 +300,13 @@ class _cartPageState extends State<cartPage> {
                                   selectedImage, // Pass the selected image as part of the checklist item
                                 );
 
-                                // Clear inputs
+                                // Clear inputs after adding item
                                 itemNameController.clear();
                                 itemDescriptionController.clear();
-                                selectedQuantity = null;
+                                selectedQuantity = ''; // Reset quantity to an empty string after use
                                 selectedFraction = null;
                                 selectedUnit = null;
-                                selectedImage = null; // Clear the selected image after adding
+                                selectedImage = null; // Clear selected image after adding
 
                                 Navigator.pop(context); // Close the bottom sheet
                               } else {
@@ -430,10 +430,11 @@ class _cartPageState extends State<cartPage> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => cartSearchPage(checklistItems: checklistItems),
+                                builder: (context) => CartSearchPage(checklistItems: checklistItems),
                               ),
                             );
                           },
+
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 10.0),
                             width: size.width * .9,
@@ -707,7 +708,11 @@ class _cartPageState extends State<cartPage> {
 
   // Widget for Quantity Content
   Widget _quantityContent(StateSetter setState) {
-    TextEditingController quantityController = TextEditingController(text: selectedQuantity); // Set initial value
+    // Generate a list of quantities from 1 to 100
+    List<String> availableQuantities = List.generate(100, (index) => (index + 1).toString());
+
+    // Set quantityController's text based on selectedQuantity (initial value).
+    quantityController.text = selectedQuantity;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -726,7 +731,7 @@ class _cartPageState extends State<cartPage> {
                 keyboardType: TextInputType.numberWithOptions(decimal: true),
                 onChanged: (value) {
                   setState(() {
-                    selectedQuantity = value;
+                    selectedQuantity = value; // Update selectedQuantity when text changes.
                   });
                 },
                 decoration: InputDecoration(
@@ -748,7 +753,7 @@ class _cartPageState extends State<cartPage> {
                 }).toList(),
                 onChanged: (value) {
                   setState(() {
-                    selectedFraction = value;
+                    selectedFraction = value!;
                   });
                 },
                 decoration: const InputDecoration(
@@ -762,14 +767,11 @@ class _cartPageState extends State<cartPage> {
                 value: selectedUnit,
                 items: ["unit", "kg", "g", "lb", "oz"]
                     .map((unit) =>
-                    DropdownMenuItem<String>(
-                      value: unit,
-                      child: Text(unit),
-                    ))
+                    DropdownMenuItem<String>(value: unit, child: Text(unit)))
                     .toList(),
                 onChanged: (value) {
                   setState(() {
-                    selectedUnit = value;
+                    selectedUnit = value!;
                   });
                 },
                 decoration: const InputDecoration(
@@ -783,7 +785,6 @@ class _cartPageState extends State<cartPage> {
       ],
     );
   }
-
 
 // Widget for Category Content
   Widget _categoryContent(StateSetter setState) {
