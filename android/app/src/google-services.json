@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "985547576752",
+    "project_id": "meal-match-8a863",
+    "storage_bucket": "meal-match-8a863.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:985547576752:android:fab3da5d17be5d7a4af275",
+        "android_client_info": {
+          "package_name": "com.example.mealmatch"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDvZOt3KA7H1ocIX-YVLCpWkwjBvR-ZxLw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
